@@ -37,17 +37,7 @@ class PackageServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../dist' => public_path('modules/' . self::PluginName),
         ], self::PluginName);
-        JDD::addModule(
-            self::PluginName,
-            // Javascripts
-            ['/modules/' . self::PluginName . '/vue-jdd-flow.umd.js'],
-            // Stylesheets
-            ['/modules/' . self::PluginName . '/vue-jdd-flow.css'],
-            // BPMN
-            [],
-            // Models
-            []
-        );
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
+        app('config')->prepend('plugins.javascript', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
+        app('config')->push('jsonapi.models', 'JDD\Worlflow\Models');
     }
 }
