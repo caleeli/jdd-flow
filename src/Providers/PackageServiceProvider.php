@@ -1,6 +1,6 @@
 <?php
 
-namespace JDD\Worlflow\Providers;
+namespace JDD\Workflow\Providers;
 
 use App\Facades\JDD;
 use Illuminate\Support\ServiceProvider;
