@@ -1,0 +1,35 @@
+{
+    "name": "coredump/jdd-flow",
+    "description": "Workflow controller",
+    "type": "library",
+    "license": "LGPL-3.0-or-later",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+      "autoload": {
+        "psr-4": {
+            "JDD\\Workflow\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "David Callizaya",
+            "email": "davidcallizaya@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JDD\\Workflow\\Providers\\PackageServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "publish": [
+            "npm run build-bundle",
+            "git commit -a"
+        ]
+    },
+    "require": {
+        "processmaker/nayra": "dev-master"
+    }
+}
