@@ -35,7 +35,7 @@ class PackageServiceProvider extends ServiceProvider
             return new Manager;
         });
         $this->publishes([
-            __DIR__ . '/../dist' => public_path('modules/' . self::PluginName),
+            __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),
         ], self::PluginName);
         app('config')->prepend('plugins.javascript', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
         app('config')->push('jsonapi.models', 'JDD\Worlflow\Models');
