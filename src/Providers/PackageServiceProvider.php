@@ -4,7 +4,7 @@ namespace JDD\Workflow\Providers;
 
 use App\Facades\JDD;
 use Illuminate\Support\ServiceProvider;
-use JDD\Worlflow\Bpmn\Manager;
+use JDD\Workflow\Bpmn\Manager;
 
 class PackageServiceProvider extends ServiceProvider
 {
@@ -38,6 +38,8 @@ class PackageServiceProvider extends ServiceProvider
             __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),
         ], self::PluginName);
         app('config')->prepend('plugins.javascript', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
-        app('config')->push('jsonapi.models', 'JDD\Worlflow\Models');
+        app('config')->push('jsonapi.models', 'JDD\Workflow\Models');
+        //dump(config('l5-swagger.paths.annotations'));
+        app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../../swagger');
     }
 }

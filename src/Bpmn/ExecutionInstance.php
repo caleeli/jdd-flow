@@ -1,6 +1,6 @@
 <?php
 
-namespace JDD\Worlflow\Bpmn;
+namespace JDD\Workflow\Bpmn;
 
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Engine\ExecutionInstanceTrait;

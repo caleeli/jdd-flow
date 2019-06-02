@@ -1,11 +1,11 @@
 <?php
 
-namespace JDD\Worlflow\Bpmn;
+namespace JDD\Workflow\Bpmn;
 
-use JDD\Worlflow\Bpmn\Repository;
-use JDD\Worlflow\Bpmn\TestEngine;
-use JDD\Worlflow\Facades\JDD;
-use JDD\Worlflow\Process;
+use JDD\Workflow\Bpmn\Repository;
+use JDD\Workflow\Bpmn\TestEngine;
+use JDD\Workflow\Facades\JDD;
+use JDD\Workflow\Process;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityActivatedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityClosedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityCompletedEvent;
@@ -68,7 +68,7 @@ class Manager
     private $processData;
 
     /**
-     * @var \JDD\Worlflow\JDD\Module $module
+     * @var \JDD\Workflow\JDD\Module $module
      */
     private $module;
 

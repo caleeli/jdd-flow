@@ -1,9 +1,9 @@
 <?php
 
-namespace JDD\Worlflow\Models;
+namespace JDD\Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use JDD\Worlflow\Facades\Workflow;
+use JDD\Workflow\Facades\Workflow;
 
 class Process extends Model
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace JDD\Worlflow\Bpmn;
+namespace JDD\Workflow\Bpmn;
 
 use ProcessMaker\Nayra\Contracts\Engine\EngineInterface;
 use ProcessMaker\Nayra\Contracts\Engine\JobManagerInterface;

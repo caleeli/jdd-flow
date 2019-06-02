@@ -1,6 +1,6 @@
 <?php
 
-namespace JDD\Worlflow\Bpmn;
+namespace JDD\Workflow\Bpmn;
 
 use ProcessMaker\Nayra\Bpmn\Collection;
 use ProcessMaker\Nayra\Bpmn\Models\Token;
