@@ -188,7 +188,7 @@ class Manager
         //Complete task
         foreach ($instance->getTokens() as $token) {
             if ($token->getId() === $tokenId) {
-                $task = $this->bpmnRepository->getActivity($token->getProperty('elementId'));
+                $task = $this->bpmnRepository->getActivity($token->getProperty('element'));
                 $task->complete($token);
                 break;
             }
@@ -292,7 +292,7 @@ class Manager
             $dataStore = $event->token->getInstance()->getDataStore();
             $tokens = $processData->tokens;
             $tokens[$event->token->getId()] = [
-                'elementId' => $event->activity->getId(),
+                'element' => $event->activity->getId(),
                 'name' => $event->activity->getName(),
                 'module' => $event->activity->getProperty('implementation'),
                 'status' => $event->token->getStatus(),
@@ -308,7 +308,7 @@ class Manager
             $dataStore = $event->token->getInstance()->getDataStore();
             $tokens = $processData->tokens;
             $tokens[$event->token->getId()] = [
-                'elementId' => $event->activity->getId(),
+                'element' => $event->activity->getId(),
                 'name' => $event->activity->getName(),
                 'module' => $event->activity->getProperty('implementation'),
                 'status' => $event->token->getStatus(),
@@ -324,7 +324,7 @@ class Manager
             $dataStore = $event->token->getInstance()->getDataStore();
             $tokens = $processData->tokens;
             $tokens[$event->token->getId()] = [
-                'elementId' => $event->activity->getId(),
+                'element' => $event->activity->getId(),
                 'name' => $event->activity->getName(),
                 'module' => $event->activity->getProperty('implementation'),
                 'status' => $event->token->getStatus(),
@@ -340,7 +340,7 @@ class Manager
             $dataStore = $event->token->getInstance()->getDataStore();
             $tokens = $processData->tokens;
             $tokens[$event->token->getId()] = [
-                'elementId' => $event->activity->getId(),
+                'element' => $event->activity->getId(),
                 'name' => $event->activity->getName(),
                 'module' => $event->activity->getProperty('implementation'),
                 'status' => $event->token->getStatus(),
@@ -364,7 +364,7 @@ class Manager
         $this->instance = $instance;
         $instanceId = $instance->getId();
         $properties = $token->getProperties();
-        $id = $properties['elementId'];
+        $id = $properties['element'];
         $node = $this->bpmnRepository->findElementById($id);
         $task = $this->bpmnRepository->getActivity($id);
         $description = $this->getDocumentation($node);

@@ -14,14 +14,38 @@ class Process extends Model
         'status' => 'ACTIVE',
     ];
     protected $fillable = [
+        'bpmn',
         'data',
         'tokens',
         'status',
     ];
     protected $casts = [
-        'data' => 'array',
         'tokens' => 'array',
     ];
+
+    /**
+     * Get data object
+     *
+     * @param string $value
+     *
+     * @return object
+     */
+    public function getDataAttribute($value)
+    {
+        return json_decode($value);
+    }
+
+    /**
+     * Set data object
+     *
+     * @param object|array $value
+     *
+     * @return void
+     */
+    public function setDataAttribute($value)
+    {
+        $this->attributes['data'] = json_encode((object) $value);
+    }
 
     /**
      * Call a process with the workflow engine

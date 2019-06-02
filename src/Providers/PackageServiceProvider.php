@@ -37,9 +37,9 @@ class PackageServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),
         ], self::PluginName);
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         app('config')->prepend('plugins.javascript', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
         app('config')->push('jsonapi.models', 'JDD\Workflow\Models');
-        //dump(config('l5-swagger.paths.annotations'));
         app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../../swagger');
     }
 }
