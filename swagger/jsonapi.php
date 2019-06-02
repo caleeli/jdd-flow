@@ -1,6 +1,7 @@
 <?php
 /**
  *  @OA\Get(
+ *      tags={"jdd-workflow"},
  *      path="/api/data/process",
  *      summary="Muestra una lista de instancias de procesos",
  *      @OA\Response(
@@ -16,25 +17,8 @@
  *      )
  *  )
  *
- *  @OA\Schema(
- *      schema="Process",
- *      allOf={
- *          @OA\Schema(
- *              @OA\Property(property="id", type="string", format="id"),
- *          ),
- *          @OA\Schema(ref="#/components/schemas/ProcessEditable"),
- *          @OA\Schema(
- *              @OA\Property(
- *                  property="attributes",
- *                  type="object",
- *                  @OA\Property(property="created_at", type="string", format="date-time"),
- *                  @OA\Property(property="updated_at", type="string", format="date-time"),
- *                  @OA\Property(property="id", type="string", format="id"),
- *              )
- *          )
- *      }
- *  )
  *  @OA\Post(
+ *      tags={"jdd-workflow"},
  *      path="/api/data/process",
  *      summary="Guarda una nueva instancia de proceso",
  *      @OA\RequestBody(

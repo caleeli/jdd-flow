@@ -21,7 +21,7 @@ export default {
             return window.axios.post('process', {
                 call: {
                     method: 'call',
-                    params: {
+                    parameters: {
                         processUrl: processUrl,
                         data: data,
                     },
@@ -40,7 +40,7 @@ export default {
             return window.axios.post('process', {
                 call: {
                     method: 'start',
-                    params: {
+                    parameters: {
                         processUrl: processUrl,
                         start: start,
                         data: data,
@@ -61,7 +61,7 @@ export default {
             return window.axios.post('process/' + token.instance, {
                 call: {
                     method: 'complete',
-                    params: {
+                    parameters: {
                         token: token.token,
                         data: data,
                     },
@@ -77,7 +77,7 @@ export default {
             return window.axios.post('process/' + token.instance, {
                 call: {
                     method: 'cancel',
-                    params: {},
+                    parameters: {},
                 }
             }).then((response) => {
                 this.onProcessCanceled(token);
@@ -89,7 +89,7 @@ export default {
             return window.axios.post('process/' + token.instance, {
                 call: {
                     method: 'tasks',
-                    params: {
+                    parameters: {
                     },
                 }
             });

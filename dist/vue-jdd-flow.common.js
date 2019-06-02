@@ -179,7 +179,7 @@ if (typeof window !== 'undefined') {
       return window.axios.post('process', {
         call: {
           method: 'call',
-          params: {
+          parameters: {
             processUrl: processUrl,
             data: data
           }
@@ -204,7 +204,7 @@ if (typeof window !== 'undefined') {
       return window.axios.post('process', {
         call: {
           method: 'start',
-          params: {
+          parameters: {
             processUrl: processUrl,
             start: start,
             data: data
@@ -231,7 +231,7 @@ if (typeof window !== 'undefined') {
       return window.axios.post('process/' + token.instance, {
         call: {
           method: 'complete',
-          params: {
+          parameters: {
             token: token.token,
             data: data
           }
@@ -252,7 +252,7 @@ if (typeof window !== 'undefined') {
       return window.axios.post('process/' + token.instance, {
         call: {
           method: 'cancel',
-          params: {}
+          parameters: {}
         }
       }).then(function (response) {
         _this4.onProcessCanceled(token);
@@ -266,7 +266,7 @@ if (typeof window !== 'undefined') {
       return window.axios.post('process/' + token.instance, {
         call: {
           method: 'tasks',
-          params: {}
+          parameters: {}
         }
       });
     },
