@@ -41,5 +41,6 @@ class PackageServiceProvider extends ServiceProvider
         app('config')->prepend('plugins.javascript', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
         app('config')->push('jsonapi.models', 'JDD\Workflow\Models');
         app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../../swagger');
+        app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../Models');
     }
 }

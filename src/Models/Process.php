@@ -5,6 +5,33 @@ namespace JDD\Workflow\Models;
 use Illuminate\Database\Eloquent\Model;
 use JDD\Workflow\Facades\Workflow;
 
+/**
+ * Process model
+ * 
+ * Swagger definition:
+ *
+ *  @OA\Schema(
+ *      schema="ProcessEditable",
+ *      @OA\Property(
+ *          property="attributes",
+ *          type="object",
+ *          @OA\Property(property="bpmn", type="string"),
+ *          @OA\Property(property="data", type="object"),
+ *          @OA\Property(
+ *              property="tokens",
+ *              type="array",
+ *              @OA\Items(
+ *                  type="object",
+ *                  @OA\Property(property="element", type="string"),
+ *                  @OA\Property(property="name", type="string"),
+ *                  @OA\Property(property="implementation", type="string"),
+ *                  @OA\Property(property="status", type="string"),
+ *              )
+ *          ),
+ *          @OA\Property(property="status", type="string", enum={"ACTIVE", "COMPLETED"}),
+ *      )
+ *  ),
+ */
 class Process extends Model
 {
     protected $attributes = [
