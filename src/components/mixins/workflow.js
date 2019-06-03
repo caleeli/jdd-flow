@@ -60,7 +60,7 @@ export default {
             this.validateToken(token);
             return window.axios.post('process/' + token.instance, {
                 call: {
-                    method: 'complete',
+                    method: 'completeTask',
                     parameters: {
                         token: token.token,
                         data: data,

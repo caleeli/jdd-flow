@@ -51,7 +51,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
             $token = $storage->getFactory()->getTokenRepository()->createTokenInstance();
             $token->setId($key);
             $token->setProperties($tokenInfo);
-            $element = $storage->getElementInstanceById($tokenInfo['elementId']);
+            $element = $storage->getElementInstanceById($tokenInfo['element']);
             $element->addToken($instance, $token);
         }
         return $instance;

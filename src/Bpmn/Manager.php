@@ -2,10 +2,7 @@
 
 namespace JDD\Workflow\Bpmn;
 
-use JDD\Workflow\Bpmn\Repository;
-use JDD\Workflow\Bpmn\TestEngine;
-use JDD\Workflow\Facades\JDD;
-use JDD\Workflow\Process;
+use JDD\Workflow\Models\Process;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityActivatedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityClosedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityCompletedEvent;
@@ -15,12 +12,11 @@ use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
-use ProcessMaker\Nayra\Contracts\Repositories\StorageInterface;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
+use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
 
 class Manager
 {
-
     /**
      * @var \ProcessMaker\Nayra\Contracts\RepositoryInterface $repository
      */
@@ -83,16 +79,31 @@ class Manager
         $this->bpmnRepository->setEngine($this->engine);
         $this->bpmnRepository->setFactory($this->repository);
         $mapping = $this->bpmnRepository->getBpmnElementsMapping();
-        $this->bpmnRepository->setBpmnElementMapping(BpmnDocument::BPMN_MODEL,
-            'userTask', $mapping[BpmnDocument::BPMN_MODEL]['task']);
-        $this->bpmnRepository->setBpmnElementMapping(BpmnDocument::BPMN_MODEL,
-            'association', BpmnDocument::SKIP_ELEMENT);
-        $this->bpmnRepository->setBpmnElementMapping(BpmnDocument::BPMN_MODEL,
-            'textAnnotation', BpmnDocument::SKIP_ELEMENT);
-        $this->bpmnRepository->setBpmnElementMapping(BpmnDocument::BPMN_MODEL,
-            'documentation', BpmnDocument::SKIP_ELEMENT);
-        $this->bpmnRepository->setBpmnElementMapping(BpmnDocument::BPMN_MODEL,
-            'humanPerformer', BpmnDocument::SKIP_ELEMENT);
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'userTask',
+            $mapping[BpmnDocument::BPMN_MODEL]['task']
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'association',
+            BpmnDocument::SKIP_ELEMENT
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'textAnnotation',
+            BpmnDocument::SKIP_ELEMENT
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'documentation',
+            BpmnDocument::SKIP_ELEMENT
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'humanPerformer',
+            BpmnDocument::SKIP_ELEMENT
+        );
         $this->engine->setRepository($this->repository);
         $this->engine->setStorage($this->bpmnRepository);
 
@@ -134,8 +145,10 @@ class Manager
         //Create a new data store
         $dataStorage = $process->getRepository()->createDataStore();
         $dataStorage->setData($data);
-        $instance = $process->getEngine()->createExecutionInstance($process,
-            $dataStorage);
+        $instance = $process->getEngine()->createExecutionInstance(
+            $process,
+            $dataStorage
+        );
         $event->start($instance);
 
         $this->engine->runToNextState();
@@ -172,7 +185,7 @@ class Manager
      *
      * @return ExecutionInstanceInterface
      */
-    public function completeTask($instanceId, $tokenId, $data=[])
+    public function completeTask($instanceId, $tokenId, $data = [])
     {
         //Load the execution data
         $this->loadData($this->bpmnRepository, $instanceId);
@@ -228,16 +241,17 @@ class Manager
      */
     private function loadProcess($processName)
     {
-        $processes = JDD::getBpmnProcesses();
-        list($module, $filename) = $processes[$processName];
-        $this->module = $module;
-        $this->bpmn = $processName;
-        $this->bpmnRepository->load($filename);
-
-        //Process
-        $process = $this->bpmnRepository->getElementsByTagName('process')->item(0)->getBpmnElementInstance();
-
-        return $process;
+        //$processes = JDD::getBpmnProcesses();
+        foreach (config('workflow.processes') as $path) {
+            foreach (glob($path) as $filename) {
+                if ($processName === basename($filename)) {
+                    $this->bpmn = $processName;
+                    $this->bpmnRepository->load($filename);
+                    $process = $this->bpmnRepository->getElementsByTagName('process')->item(0)->getBpmnElementInstance();
+                    return $process;
+                }
+            }
+        }
     }
 
     /**
@@ -257,7 +271,7 @@ class Manager
             $instanceId => [
                 'id' => $instanceId,
                 'processId' => $processData->process_id,
-                'data' => $processData->data,
+                'data' => json_decode(json_encode($processData->data), true),
                 'tokens' => $processData->tokens,
             ]
         ]);
@@ -266,89 +280,102 @@ class Manager
 
     private function listenSaveEvents()
     {
-        $this->dispatcher->listen(ProcessInterface::EVENT_PROCESS_INSTANCE_CREATED,
-            function(ProcessInstanceCreatedEvent $payload) {
-            $processData = Process::findOrNew($payload->instance->getId());
-            $dataStore = $payload->instance->getDataStore();
-            $processData->process_id = $payload->instance->getProcess()->getId();
-            $processData->data = $dataStore->getData();
-            $processData->tokens = [];
-            $processData->status = 'ACTIVE';
-            $processData->bpmn = $this->bpmn;
-            $processData->save();
-            $payload->instance->setId($processData->id);
-        });
-        $this->dispatcher->listen(ProcessInterface::EVENT_PROCESS_INSTANCE_COMPLETED,
-            function(ProcessInstanceCompletedEvent $payload) {
-            $processData = Process::findOrFail($payload->instance->getId());
-            $processData->status = 'COMPLETED';
-            $processData->save();
-            $payload->instance->setId($processData->id);
-        });
-        $this->dispatcher->listen(ActivityInterface::EVENT_ACTIVITY_ACTIVATED,
-            function(ActivityActivatedEvent $event) {
-            $id = $event->token->getInstance()->getId();
-            $processData = Process::findOrFail($id);
-            $dataStore = $event->token->getInstance()->getDataStore();
-            $tokens = $processData->tokens;
-            $tokens[$event->token->getId()] = [
-                'element' => $event->activity->getId(),
-                'name' => $event->activity->getName(),
-                'module' => $event->activity->getProperty('implementation'),
-                'status' => $event->token->getStatus(),
-            ];
-            $processData->tokens = $tokens;
-            $processData->data = $dataStore->getData();
-            $processData->save();
-        });
-        $this->dispatcher->listen(ScriptTaskInterface::EVENT_SCRIPT_TASK_ACTIVATED,
-            function(ScriptTaskInterface $scriptTask, TokenInterface $token) {
-            $id = $event->token->getInstance()->getId();
-            $processData = Process::findOrFail($id);
-            $dataStore = $event->token->getInstance()->getDataStore();
-            $tokens = $processData->tokens;
-            $tokens[$event->token->getId()] = [
-                'element' => $event->activity->getId(),
-                'name' => $event->activity->getName(),
-                'module' => $event->activity->getProperty('implementation'),
-                'status' => $event->token->getStatus(),
-            ];
-            $processData->tokens = $tokens;
-            $processData->data = $dataStore->getData();
-            $processData->save();
-        });
-        $this->dispatcher->listen(ActivityInterface::EVENT_ACTIVITY_COMPLETED,
-            function(ActivityCompletedEvent $event) {
-            $id = $event->token->getInstance()->getId();
-            $processData = Process::findOrFail($id);
-            $dataStore = $event->token->getInstance()->getDataStore();
-            $tokens = $processData->tokens;
-            $tokens[$event->token->getId()] = [
-                'element' => $event->activity->getId(),
-                'name' => $event->activity->getName(),
-                'module' => $event->activity->getProperty('implementation'),
-                'status' => $event->token->getStatus(),
-            ];
-            $processData->tokens = $tokens;
-            $processData->data = $dataStore->getData();
-            $processData->save();
-        });
-        $this->dispatcher->listen(ActivityInterface::EVENT_ACTIVITY_CLOSED,
-            function(ActivityClosedEvent $event) {
-            $id = $event->token->getInstance()->getId();
-            $processData = Process::findOrFail($id);
-            $dataStore = $event->token->getInstance()->getDataStore();
-            $tokens = $processData->tokens;
-            $tokens[$event->token->getId()] = [
-                'element' => $event->activity->getId(),
-                'name' => $event->activity->getName(),
-                'module' => $event->activity->getProperty('implementation'),
-                'status' => $event->token->getStatus(),
-            ];
-            $processData->tokens = $tokens;
-            $processData->data = $dataStore->getData();
-            $processData->save();
-        });
+        $this->dispatcher->listen(
+            ProcessInterface::EVENT_PROCESS_INSTANCE_CREATED,
+            function (ProcessInstanceCreatedEvent $payload) {
+                $processData = Process::findOrNew($payload->instance->getId());
+                $dataStore = $payload->instance->getDataStore();
+                $processData->process_id = $payload->instance->getProcess()->getId();
+                $processData->data = $dataStore->getData();
+                $processData->tokens = [];
+                $processData->status = 'ACTIVE';
+                $processData->bpmn = $this->bpmn;
+                $processData->save();
+                $payload->instance->setId($processData->id);
+            }
+        );
+        $this->dispatcher->listen(
+            ProcessInterface::EVENT_PROCESS_INSTANCE_COMPLETED,
+            function (ProcessInstanceCompletedEvent $payload) {
+                $processData = Process::findOrFail($payload->instance->getId());
+                $processData->status = 'COMPLETED';
+                $processData->save();
+                $payload->instance->setId($processData->id);
+            }
+        );
+        $this->dispatcher->listen(
+            ActivityInterface::EVENT_ACTIVITY_ACTIVATED,
+            function (ActivityActivatedEvent $event) {
+                $id = $event->token->getInstance()->getId();
+                $processData = Process::findOrFail($id);
+                $dataStore = $event->token->getInstance()->getDataStore();
+                $tokens = $processData->tokens;
+                $tokens[$event->token->getId()] = [
+                    'element' => $event->activity->getId(),
+                    'name' => $event->activity->getName(),
+                    'implementation' => $event->activity->getProperty('implementation'),
+                    'status' => $event->token->getStatus(),
+                ];
+                $processData->tokens = $tokens;
+                $processData->data = $dataStore->getData();
+                $processData->save();
+            }
+        );
+        $this->dispatcher->listen(
+            ScriptTaskInterface::EVENT_SCRIPT_TASK_ACTIVATED,
+            function (ScriptTaskInterface $scriptTask, TokenInterface $token) {
+                $id = $token->getInstance()->getId();
+                $processData = Process::findOrFail($id);
+                $dataStore = $token->getInstance()->getDataStore();
+                $tokens = $processData->tokens;
+                $tokens[$token->getId()] = [
+                    'element' => $scriptTask->getId(),
+                    'name' => $scriptTask->getName(),
+                    'implementation' => $scriptTask->getProperty('implementation'),
+                    'status' => $token->getStatus(),
+                ];
+                $processData->tokens = $tokens;
+                $processData->data = $dataStore->getData();
+                $processData->save();
+                $processData->runScript($scriptTask->getScript());
+            }
+        );
+        $this->dispatcher->listen(
+            ActivityInterface::EVENT_ACTIVITY_COMPLETED,
+            function (ActivityCompletedEvent $event) {
+                $id = $event->token->getInstance()->getId();
+                $processData = Process::findOrFail($id);
+                $dataStore = $event->token->getInstance()->getDataStore();
+                $tokens = $processData->tokens;
+                $tokens[$event->token->getId()] = [
+                    'element' => $event->activity->getId(),
+                    'name' => $event->activity->getName(),
+                    'implementation' => $event->activity->getProperty('implementation'),
+                    'status' => $event->token->getStatus(),
+                ];
+                $processData->tokens = $tokens;
+                $processData->data = $dataStore->getData();
+                $processData->save();
+            }
+        );
+        $this->dispatcher->listen(
+            ActivityInterface::EVENT_ACTIVITY_CLOSED,
+            function (ActivityClosedEvent $event) {
+                $id = $event->token->getInstance()->getId();
+                $processData = Process::findOrFail($id);
+                $dataStore = $event->token->getInstance()->getDataStore();
+                $tokens = $processData->tokens;
+                $tokens[$event->token->getId()] = [
+                    'element' => $event->activity->getId(),
+                    'name' => $event->activity->getName(),
+                    'implementation' => $event->activity->getProperty('implementation'),
+                    'status' => $event->token->getStatus(),
+                ];
+                $processData->tokens = $tokens;
+                $processData->data = $dataStore->getData();
+                $processData->save();
+            }
+        );
     }
 
     /**
@@ -387,9 +414,12 @@ class Manager
 
     private function evaluateString($string)
     {
-        return preg_replace_callback('/\{(.+)\}/',
+        return preg_replace_callback(
+            '/\{(.+)\}/',
             function ($match) {
-            return $this->evaluateCode($match[1]);
-        }, $string);
+                return $this->evaluateCode($match[1]);
+            },
+            $string
+        );
     }
 }

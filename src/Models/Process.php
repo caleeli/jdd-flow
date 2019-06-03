@@ -104,6 +104,7 @@ class Process extends Model
     {
         $instance = Workflow::callProcess($processUrl, $data);
         return [
+            'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
         ];
     }
@@ -151,5 +152,34 @@ class Process extends Model
         return [
             'attributes' => $instance->getProperties(),
         ];
+    }
+
+    public function tasks()
+    {
+        $tasks = [];
+        foreach($this->tokens as $tokenId => $token) {
+            $tasks[] = [
+                'path' => substr($token['implementation'], 1),
+                'token' => [
+                    'instance'=> $this->id,
+                    'token'=> $tokenId,
+                ],
+            ];
+        }
+        return $tasks;
+    }
+
+    public function runScript($code)
+    {
+        $filename = storage_path('app/' . uniqid('script_') . '.php');
+        file_put_contents($filename, $code);
+        ob_start();
+        require($filename);
+        $output = ob_get_contents();
+        ob_end_clean();
+        error_log($output);
+        unlink($filename);
+        $this->data = $this->data;
+        $this->save();
     }
 }

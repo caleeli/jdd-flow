@@ -10,6 +10,8 @@ use ProcessMaker\Nayra\Contracts\Bpmn\GatewayInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ThrowEventInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Contracts\Repositories\TokenRepositoryInterface;
+use ProcessMaker\Nayra\Contracts\Bpmn\CollectionInterface;
+use ProcessMaker\Nayra\Contracts\Bpmn\EventBasedGatewayInterface;
 
 /**
  * Token Repository.
@@ -40,7 +42,6 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function loadTokenByUid($uid)
     {
-
     }
 
     /**
@@ -53,7 +54,6 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function store(TokenInterface $token, $saveChildElements = false)
     {
-
     }
 
     /**
@@ -66,7 +66,6 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function persistActivityActivated(ActivityInterface $activity, TokenInterface $token)
     {
-        
     }
 
     /**
@@ -79,7 +78,6 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function persistActivityException(ActivityInterface $activity, TokenInterface $token)
     {
-        
     }
 
     /**
@@ -92,7 +90,6 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function persistActivityCompleted(ActivityInterface $activity, TokenInterface $token)
     {
-        
     }
 
     /**
@@ -105,7 +102,6 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function persistActivityClosed(ActivityInterface $activity, TokenInterface $token)
     {
-        
     }
 
     /**
@@ -246,7 +242,7 @@ class TokenRepository implements TokenRepositoryInterface
 
     /**
      * Persists instance and token data when a message arrives to a catch event
-     * 
+     *
      * @param CatchEventInterface $intermediateCatchEvent
      * @param TokenInterface $token
      */
@@ -257,7 +253,7 @@ class TokenRepository implements TokenRepositoryInterface
 
     /**
      * Persists instance and token data when a message is consumed in a catch event
-     * 
+     *
      * @param CatchEventInterface $intermediateCatchEvent
      * @param TokenInterface $token
      */
@@ -268,6 +264,9 @@ class TokenRepository implements TokenRepositoryInterface
 
     public function persistStartEventTriggered(\ProcessMaker\Nayra\Contracts\Bpmn\StartEventInterface $startEvent, \ProcessMaker\Nayra\Contracts\Bpmn\CollectionInterface $tokens)
     {
-        
+    }
+
+    public function persistEventBasedGatewayActivated(EventBasedGatewayInterface $eventBasedGateway, TokenInterface $passedToken, CollectionInterface $consumedTokens)
+    {
     }
 }

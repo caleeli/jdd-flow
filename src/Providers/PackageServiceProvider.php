@@ -36,6 +36,7 @@ class PackageServiceProvider extends ServiceProvider
         });
         $this->publishes([
             __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),
+            __DIR__ . '/../../config/workflow.php' => config_path('workflow.php'),
         ], self::PluginName);
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         app('config')->prepend('plugins.javascript_before', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
