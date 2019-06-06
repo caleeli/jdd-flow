@@ -72,7 +72,11 @@ class PackageServiceProvider extends ServiceProvider
                     'id' => uniqid('p', true),
                     'parent' => null,
                     'name' => $start->getAttribute('name'),
-                    'action' => sprintf('startProcess(%s)', json_encode($processUrl), json_encode($start->getAttribute('id'))),
+                    'action' => sprintf(
+                        'this.startProcess(%s, %s)',
+                        json_encode($processUrl),
+                        json_encode($start->getAttribute('id'))
+                    ),
                 ];
             }
         }

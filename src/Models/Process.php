@@ -120,6 +120,7 @@ class Process extends Model
     {
         $instance = Workflow::startProcess($processUrl, $start, $data);
         return [
+            'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
         ];
     }
@@ -135,6 +136,7 @@ class Process extends Model
     {
         $instance = Workflow::completeTask($this->id, $token, $data);
         return [
+            'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
         ];
     }
@@ -150,6 +152,7 @@ class Process extends Model
     {
         $instance = Workflow::cancelProcess($this->id);
         return [
+            'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
         ];
     }
