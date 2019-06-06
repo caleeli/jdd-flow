@@ -241,17 +241,30 @@ class Manager
      */
     private function loadProcess($processName)
     {
-        //$processes = JDD::getBpmnProcesses();
-        foreach (config('workflow.processes') as $path) {
-            foreach (glob($path) as $filename) {
-                if ($processName === basename($filename)) {
-                    $this->bpmn = $processName;
-                    $this->bpmnRepository->load($filename);
-                    $process = $this->bpmnRepository->getElementsByTagName('process')->item(0)->getBpmnElementInstance();
-                    return $process;
-                }
+        foreach ($this->getProcessPaths() as $name => $filename) {
+            if ($processName === $name) {
+                $this->bpmn = $processName;
+                $this->bpmnRepository->load($filename);
+                $process = $this->bpmnRepository->getElementsByTagName('process')->item(0)->getBpmnElementInstance();
+                return $process;
             }
         }
+    }
+
+    /**
+     * Get array of all registered processes
+     *
+     * @return array
+     */
+    public function getProcessPaths()
+    {
+        $paths = [];
+        foreach (config('workflow.processes') as $path) {
+            foreach (glob($path) as $filename) {
+                $paths[basename($filename)] = $filename;
+            }
+        }
+        return $paths;
     }
 
     /**
