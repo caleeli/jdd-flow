@@ -148,7 +148,7 @@ class Process extends Model
      *
      * @return array
      */
-    public function cancelProcess()
+    public function cancel()
     {
         $instance = Workflow::cancelProcess($this->id);
         return [

@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use JDD\Workflow\Bpmn\Manager;
 use JDD\Workflow\Facades\Workflow;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
+use ProcessMaker\Nayra\Storage\BpmnElement;
 
 class PackageServiceProvider extends ServiceProvider
 {
@@ -68,9 +69,11 @@ class PackageServiceProvider extends ServiceProvider
             $dom = new BpmnDocument();
             $dom->load($process);
             foreach ($dom->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'startEvent') as $start) {
+                list($tags, $text) = self::getDocumentationInfo($start);
                 $menus[] = [
                     'id' => uniqid('p', true),
-                    'parent' => null,
+                    'parent' => isset($tags['menu'][0]) ? $tags['menu'][0] : null,
+                    'icon' => isset($tags['icon'][0]) ? $tags['icon'][0] : '',
                     'name' => $start->getAttribute('name'),
                     'action' => sprintf(
                         'this.startProcess(%s, %s)',
@@ -81,5 +84,21 @@ class PackageServiceProvider extends ServiceProvider
             }
         }
         return $menus;
+    }
+
+    private static function getDocumentationInfo(BpmnElement $node)
+    {
+        $tags = [];
+        $text = '';
+        $documentation = $node->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'documentation');
+        foreach ($documentation as $doc) {
+            $text .= preg_replace_callback('/@(\w+)\(([^()]+)\)/', function ($match) use (&$tags) {
+                $tag = $match[1];
+                $value = $match[2];
+                $tags[$tag][] = $value;
+                return '';
+            }, $doc->textContent);
+        }
+        return [$tags, $text];
     }
 }
