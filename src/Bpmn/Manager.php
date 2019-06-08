@@ -14,6 +14,8 @@ use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
 use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
+use ProcessMaker\Nayra\Bpmn\Models\ScriptTask;
+use JDD\Workflow\Jobs\ScriptTaskJob;
 
 class Manager
 {
@@ -187,18 +189,18 @@ class Manager
      */
     public function completeTask($instanceId, $tokenId, $data = [])
     {
-        //Load the execution data
+        // Load the execution data
         $this->loadData($this->bpmnRepository, $instanceId);
 
-        //Process and instance
+        // Process and instance
         $instance = $this->engine->loadExecutionInstance($instanceId);
 
-        //Get task instance
+        // Update data
         foreach ($data as $key => $value) {
             $instance->getDataStore()->putData($key, $value);
         }
 
-        //Complete task
+        // Complete task
         foreach ($instance->getTokens() as $token) {
             if ($token->getId() === $tokenId) {
                 $task = $this->bpmnRepository->getActivity($token->getProperty('element'));
@@ -229,6 +231,28 @@ class Manager
 
         //Return the instance id
         $instance = $this->engine->loadExecutionInstance($instanceId);
+        return $instance;
+    }
+
+    public function executeScript($instanceId, $tokenId)
+    {
+        // Load the execution data
+        $this->loadData($this->bpmnRepository, $instanceId);
+
+        // Process and instance
+        $instance = $this->engine->loadExecutionInstance($instanceId);
+
+        // Complete task
+        foreach ($instance->getTokens() as $token) {
+            if ($token->getId() === $tokenId) {
+                $task = $this->bpmnRepository->getScriptTask($token->getProperty('element'));
+                $task->runScript($token);
+                break;
+            }
+        }
+        $this->engine->runToNextState();
+
+        //Return the instance id
         return $instance;
     }
 
@@ -350,7 +374,8 @@ class Manager
                 $processData->tokens = $tokens;
                 $processData->data = $dataStore->getData();
                 $processData->save();
-                $processData->runScript($scriptTask->getScript());
+                //$processData->runScript($scriptTask->getScript());
+                ScriptTaskJob::dispatchNow($token);
             }
         );
         $this->dispatcher->listen(

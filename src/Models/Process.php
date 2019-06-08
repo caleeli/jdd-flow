@@ -7,7 +7,7 @@ use JDD\Workflow\Facades\Workflow;
 
 /**
  * Process model
- * 
+ *
  * Swagger definition:
  *
  *  @OA\Schema(
@@ -160,12 +160,12 @@ class Process extends Model
     public function tasks()
     {
         $tasks = [];
-        foreach($this->tokens as $tokenId => $token) {
+        foreach ($this->tokens as $tokenId => $token) {
             $tasks[] = [
                 'path' => substr($token['implementation'], 1),
                 'token' => [
-                    'instance'=> $this->id,
-                    'token'=> $tokenId,
+                    'instance' => $this->id,
+                    'token' => $tokenId,
                 ],
             ];
         }
@@ -177,7 +177,7 @@ class Process extends Model
         $filename = storage_path('app/' . uniqid('script_') . '.php');
         file_put_contents($filename, $code);
         ob_start();
-        require($filename);
+        require $filename;
         $output = ob_get_contents();
         ob_end_clean();
         error_log($output);

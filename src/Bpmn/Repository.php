@@ -39,6 +39,16 @@ class Repository implements RepositoryInterface
     }
 
     /**
+     * Create instance of ScriptTask.
+     *
+     * @return \ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface
+     */
+    public function createScriptTask()
+    {
+        return new ScriptTask();
+    }
+
+    /**
      * Create a execution instance repository.
      *
      * @return \ProcessMaker\Test\Models\ExecutionInstanceRepository
