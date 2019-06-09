@@ -6,6 +6,9 @@ use Exception;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Bpmn\Models\ScriptTask as ScriptTaskBase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use JDD\Workflow\Events\ScriptConsole;
+use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 
 /**
  * This activity will raise an exception when executed.
@@ -13,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class ScriptTask extends ScriptTaskBase
 {
+    private $consoleElement = null;
+
     /**
      * Runs the ScriptTask
      *
@@ -42,9 +47,13 @@ class ScriptTask extends ScriptTaskBase
         try {
             $filename = storage_path('app/' . uniqid('script_') . '.php');
             file_put_contents($filename, $script);
-            ob_start(function ($buffer) {
-                //Storage::append($this->getName() . '.txt', $buffer);
-                error_log($buffer);
+            $logfile = $token->getId() . '.txt';
+            Storage::disk('public')->delete($logfile);
+            ob_start(function ($buffer) use($token, $logfile) {
+                if ($this->consoleElement) {
+                    event(new ScriptConsole($token, $this, $logfile));
+                    Storage::disk('public')->append($logfile, $buffer);
+                }
             }, 1);
             require $filename;
             ob_end_clean();
@@ -53,5 +62,15 @@ class ScriptTask extends ScriptTaskBase
             $result = false;
         }
         return $result;
+    }
+
+    public function setConsoleElement($element)
+    {
+        $this->consoleElement = $element;
+    }
+
+    public function getConsoleElement()
+    {
+        return $this->consoleElement;
     }
 }

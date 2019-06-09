@@ -16,6 +16,7 @@ use ProcessMaker\Nayra\Storage\BpmnDocument;
 use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
 use ProcessMaker\Nayra\Bpmn\Models\ScriptTask;
 use JDD\Workflow\Jobs\ScriptTaskJob;
+use ProcessMaker\Nayra\Storage\BpmnElement;
 
 class Manager
 {
@@ -245,7 +246,11 @@ class Manager
         // Complete task
         foreach ($instance->getTokens() as $token) {
             if ($token->getId() === $tokenId) {
+                $node = $this->bpmnRepository->findElementById($token->getProperty('element'));
                 $task = $this->bpmnRepository->getScriptTask($token->getProperty('element'));
+                list($tags, $text) = self::getDocumentationInfo($node);
+                error_log('console: ' . json_encode($tags['console'][0]));
+                $task->setConsoleElement(isset($tags['console'][0]) ? $tags['console'][0] : null);
                 $task->runScript($token);
                 break;
             }
@@ -374,8 +379,7 @@ class Manager
                 $processData->tokens = $tokens;
                 $processData->data = $dataStore->getData();
                 $processData->save();
-                //$processData->runScript($scriptTask->getScript());
-                ScriptTaskJob::dispatchNow($token);
+                ScriptTaskJob::dispatch($token);
             }
         );
         $this->dispatcher->listen(
@@ -459,5 +463,21 @@ class Manager
             },
             $string
         );
+    }
+
+    public static function getDocumentationInfo(BpmnElement $node)
+    {
+        $tags = [];
+        $text = '';
+        $documentation = $node->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'documentation');
+        foreach ($documentation as $doc) {
+            $text .= preg_replace_callback('/@(\w+)\(([^()]+)\)/', function ($match) use (&$tags) {
+                $tag = $match[1];
+                $value = $match[2];
+                $tags[$tag][] = $value;
+                return '';
+            }, $doc->textContent);
+        }
+        return [$tags, $text];
     }
 }

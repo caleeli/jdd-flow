@@ -33,6 +33,8 @@ class PackageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Register routes
+        $this->loadRoutesFrom(__DIR__.'/../../routes/channels.php');
         // Workflow Engine
         $this->app->bind(
             'workflow.engine',
@@ -69,7 +71,7 @@ class PackageServiceProvider extends ServiceProvider
             $dom = new BpmnDocument();
             $dom->load($process);
             foreach ($dom->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'startEvent') as $start) {
-                list($tags, $text) = self::getDocumentationInfo($start);
+                list($tags, $text) = Manager::getDocumentationInfo($start);
                 $menus[] = [
                     'id' => uniqid('p', true),
                     'parent' => isset($tags['menu'][0]) ? $tags['menu'][0] : null,
@@ -84,21 +86,5 @@ class PackageServiceProvider extends ServiceProvider
             }
         }
         return $menus;
-    }
-
-    private static function getDocumentationInfo(BpmnElement $node)
-    {
-        $tags = [];
-        $text = '';
-        $documentation = $node->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'documentation');
-        foreach ($documentation as $doc) {
-            $text .= preg_replace_callback('/@(\w+)\(([^()]+)\)/', function ($match) use (&$tags) {
-                $tag = $match[1];
-                $value = $match[2];
-                $tags[$tag][] = $value;
-                return '';
-            }, $doc->textContent);
-        }
-        return [$tags, $text];
     }
 }

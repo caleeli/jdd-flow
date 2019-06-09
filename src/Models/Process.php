@@ -161,13 +161,15 @@ class Process extends Model
     {
         $tasks = [];
         foreach ($this->tokens as $tokenId => $token) {
-            $tasks[] = [
-                'path' => substr($token['implementation'], 1),
-                'token' => [
-                    'instance' => $this->id,
-                    'token' => $tokenId,
-                ],
-            ];
+            if ($token['status']==='ACTIVE' && $token['implementation']) {
+                $tasks[] = [
+                    'path' => substr($token['implementation'], 1),
+                    'token' => [
+                        'instance' => $this->id,
+                        'token' => $tokenId,
+                    ],
+                ];
+            }
         }
         return $tasks;
     }
