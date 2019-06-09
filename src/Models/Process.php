@@ -173,18 +173,4 @@ class Process extends Model
         }
         return $tasks;
     }
-
-    public function runScript($code)
-    {
-        $filename = storage_path('app/' . uniqid('script_') . '.php');
-        file_put_contents($filename, $code);
-        ob_start();
-        require $filename;
-        $output = ob_get_contents();
-        ob_end_clean();
-        error_log($output);
-        unlink($filename);
-        $this->data = $this->data;
-        $this->save();
-    }
 }

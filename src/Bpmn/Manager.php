@@ -14,7 +14,6 @@ use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
 use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
-use ProcessMaker\Nayra\Bpmn\Models\ScriptTask;
 use JDD\Workflow\Jobs\ScriptTaskJob;
 use ProcessMaker\Nayra\Storage\BpmnElement;
 
@@ -73,6 +72,14 @@ class Manager
 
     public function __construct()
     {
+        $this->prepare();
+
+        //Se podria mover al app service provider
+        $this->listenSaveEvents();
+    }
+
+    private function prepare()
+    {
         $this->repository = new Repository;
         $this->dispatcher = app('events');
         $this->engine = new TestEngine($this->repository, $this->dispatcher);
@@ -109,9 +116,6 @@ class Manager
         );
         $this->engine->setRepository($this->repository);
         $this->engine->setStorage($this->bpmnRepository);
-
-        //Se podria mover al app service provider
-        $this->listenSaveEvents();
     }
 
     /**
@@ -124,6 +128,7 @@ class Manager
      */
     public function callProcess($processURL, $data = [])
     {
+        $this->prepare();
         //Process
         $process = $this->loadProcess($processURL);
         $instance = $process->call();
@@ -141,6 +146,7 @@ class Manager
      */
     public function startProcess($processURL, $eventId, $data = [])
     {
+        $this->prepare();
         //Process
         $process = $this->loadProcess($processURL);
         $event = $this->bpmnRepository->getStartEvent($eventId);
@@ -165,6 +171,7 @@ class Manager
      */
     public function tasks($instanceId)
     {
+        $this->prepare();
         //Load the execution data
         $this->processData = $this->loadData($this->bpmnRepository, $instanceId);
 
@@ -190,6 +197,7 @@ class Manager
      */
     public function completeTask($instanceId, $tokenId, $data = [])
     {
+        $this->prepare();
         // Load the execution data
         $this->loadData($this->bpmnRepository, $instanceId);
 
@@ -224,6 +232,7 @@ class Manager
      */
     public function cancelProcess($instanceId)
     {
+        $this->prepare();
         //Load the execution data
         $processData = $this->loadData($this->bpmnRepository, $instanceId);
 
@@ -235,10 +244,19 @@ class Manager
         return $instance;
     }
 
+    /**
+     * Execute a script task
+     *
+     * @param string $instanceId
+     * @param string $tokenId
+     *
+     * @return ExecutionInstanceInterface
+     */
     public function executeScript($instanceId, $tokenId)
     {
+        $this->prepare();
         // Load the execution data
-        $this->loadData($this->bpmnRepository, $instanceId);
+        $model = $this->loadData($this->bpmnRepository, $instanceId);
 
         // Process and instance
         $instance = $this->engine->loadExecutionInstance($instanceId);
@@ -249,8 +267,8 @@ class Manager
                 $node = $this->bpmnRepository->findElementById($token->getProperty('element'));
                 $task = $this->bpmnRepository->getScriptTask($token->getProperty('element'));
                 list($tags, $text) = self::getDocumentationInfo($node);
-                error_log('console: ' . json_encode($tags['console'][0]));
                 $task->setConsoleElement(isset($tags['console'][0]) ? $tags['console'][0] : null);
+                $task->setModel($model);
                 $task->runScript($token);
                 break;
             }
