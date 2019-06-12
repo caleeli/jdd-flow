@@ -6,7 +6,7 @@ use Exception;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Bpmn\Models\ScriptTask as ScriptTaskBase;
 use Illuminate\Support\Facades\Storage;
-use JDD\Workflow\Events\ScriptConsole;
+use JDD\Workflow\Events\ElementConsole;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use JDD\Workflow\Models\Process as Model;
 
@@ -85,7 +85,9 @@ class ScriptTask extends ScriptTaskBase
     {
         if ($this->consoleElement) {
             Storage::disk('public')->append($logfile, $buffer);
-            event(new ScriptConsole($token, $this, $logfile));
+            event(new ElementConsole($token->getInstance(), $this->getConsoleElement(), [
+                'url' => '/storage/' . $this->logfile,
+            ]));
         }
     }
 

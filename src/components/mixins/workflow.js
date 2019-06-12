@@ -1,8 +1,9 @@
 
 export default {
-    data(){
+    data() {
         return {
             dashboardPath: '/',
+            socketListeners: [],
         };
     },
     computed: {
@@ -14,9 +15,9 @@ export default {
         }
     },
     methods: {
-        onProcessInstance() {},
-        onProcessCanceled() {},
-        onTaskCompleted() {},
+        onProcessInstance() { },
+        onProcessCanceled() { },
+        onTaskCompleted() { },
         callProcess(processUrl, data = {}) {
             return window.axios.post('process', {
                 call: {
@@ -122,6 +123,28 @@ export default {
             if (!valid) {
                 throw "Invalid token: " + JSON.stringify(token);
             }
+        },
+        addSocketListener(channel, event, callback) {
+            this.socketListeners.push({
+                channel,
+                event,
+            });
+            window.Echo.private(channel).listen(
+                event,
+                callback,
+            );
+        },
+        listenConsole(callback, instance = this.$route.query.instance, token = this.$route.query.token) {
+            const channel = `Process.${instance}.Token.${token}`;
+            this.addSocketListener(channel, ".ElementConsole", callback);
         }
+    },
+    destroyed: function () {
+        // Stop registered socket listeners 
+        this.socketListeners.forEach(element => {
+            window.Echo.private(
+                element.channel
+            ).stopListening(element.event);
+        });
     },
 };
