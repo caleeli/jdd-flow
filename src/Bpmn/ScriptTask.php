@@ -86,7 +86,7 @@ class ScriptTask extends ScriptTaskBase
         if ($this->consoleElement) {
             Storage::disk('public')->append($logfile, $buffer);
             event(new ElementConsole($token->getInstance(), $this->getConsoleElement(), [
-                'url' => '/storage/' . $this->logfile,
+                'url' => '/storage/' . $logfile,
             ]));
         }
     }

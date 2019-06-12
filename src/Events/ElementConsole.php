@@ -13,6 +13,7 @@ class ElementConsole implements ShouldBroadcastNow
     use SerializesModels;
 
     public $consoleTokens = [];
+    public $instanceId;
     public $message;
 
     /**
@@ -22,6 +23,7 @@ class ElementConsole implements ShouldBroadcastNow
      */
     public function __construct(ExecutionInstanceInterface $instance, $elementId, $message)
     {
+        $this->instanceId = $instance->getId();
         $this->message = $message;
         foreach ($instance->getTokens() as $token) {
             $properties = $token->getProperties();
