@@ -20,6 +20,6 @@ class ExecutionInstance implements ExecutionInstanceInterface
      */
     protected function initToken()
     {
-        $this->setId(uniqid());
+        $this->setId(hexdec(uniqid()));
     }
 }

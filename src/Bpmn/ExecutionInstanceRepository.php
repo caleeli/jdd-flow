@@ -21,7 +21,6 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
      */
     private static $data = [];
 
-
     /**
      * Load an execution instance from a persistent storage.
      *
@@ -39,7 +38,6 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $instance = $this->createExecutionInstance();
         $instance->setId($uid);
         $process = $storage->getProcess($data['processId']);
-        $process->addInstance($instance);
         $dataStore = $storage->getFactory()->createDataStore();
         $dataStore->setData($data['data']);
         $instance->setProcess($process);
@@ -47,7 +45,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $process->getTransitions($storage->getFactory());
 
         //Load tokens:
-        foreach($data['tokens'] as $key => $tokenInfo) {
+        foreach ($data['tokens'] as $key => $tokenInfo) {
             $token = $storage->getFactory()->getTokenRepository()->createTokenInstance();
             $token->setId($key);
             $token->setProperties($tokenInfo);
@@ -86,7 +84,6 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
      */
     public function persistInstanceCreated(ExecutionInstanceInterface $instance)
     {
-
     }
 
     /**
