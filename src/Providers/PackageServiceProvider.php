@@ -6,9 +6,9 @@ use App\Menu;
 use App\User;
 use Illuminate\Support\ServiceProvider;
 use JDD\Workflow\Bpmn\Manager;
+use JDD\Workflow\Console\Commands\UpdatePackage;
 use JDD\Workflow\Facades\Workflow;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
-use ProcessMaker\Nayra\Storage\BpmnElement;
 
 class PackageServiceProvider extends ServiceProvider
 {
@@ -33,6 +33,8 @@ class PackageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Register artisan commands
+        $this->commands([UpdatePackage::class]);
         // Register routes
         $this->loadRoutesFrom(__DIR__.'/../../routes/channels.php');
         // Workflow Engine
@@ -44,6 +46,8 @@ class PackageServiceProvider extends ServiceProvider
         );
         $this->publishes([
             __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),
+        ], 'assets');
+        $this->publishes([
             __DIR__ . '/../../config/workflow.php' => config_path('workflow.php'),
         ], self::PluginName);
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
