@@ -1226,13 +1226,16 @@ var web_dom_iterable = __webpack_require__("ac6a");
       var token = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.token;
       var channel = "Process.".concat(instance, ".Token.").concat(token);
       this.addSocketListener(channel, ".ElementConsole", callback);
+    },
+    cleanSocketListeners: function cleanSocketListeners() {
+      // Stop registered socket listeners 
+      this.socketListeners.forEach(function (element) {
+        window.Echo.private(element.channel).stopListening(element.event);
+      });
     }
   },
   destroyed: function destroyed() {
-    // Stop registered socket listeners 
-    this.socketListeners.forEach(function (element) {
-      window.Echo.private(element.channel).stopListening(element.event);
-    });
+    this.cleanSocketListeners();
   }
 });
 // CONCATENATED MODULE: ./src/components/index.js
