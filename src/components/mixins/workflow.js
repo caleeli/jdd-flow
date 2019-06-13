@@ -57,7 +57,7 @@ export default {
                 return response;
             });
         },
-        completeTask(data, token = this.workflowToken) {
+        completeTask(data = {}, token = this.workflowToken) {
             this.validateToken(token);
             return window.axios.post('process/' + token.instance, {
                 call: {

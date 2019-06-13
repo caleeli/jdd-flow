@@ -1145,9 +1145,10 @@ var web_dom_iterable = __webpack_require__("ac6a");
         return response;
       });
     },
-    completeTask: function completeTask(data) {
+    completeTask: function completeTask() {
       var _this3 = this;
 
+      var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       var token = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.workflowToken;
       this.validateToken(token);
       return window.axios.post('process/' + token.instance, {
