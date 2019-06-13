@@ -358,9 +358,7 @@ class Manager
         $processes = $this->bpmnRepository->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'process');
         foreach ($processes as $node) {
             $process = $node->getBpmnElementInstance();
-            error_log('Save process: ' . $process->getId());
             foreach ($process->getInstances() as $instance) {
-                error_log('Save instance: ' . $instance->getId());
                 $this->saveProcessInstance($instance);
             }
         }
@@ -395,7 +393,6 @@ class Manager
                 'index' => $token->getIndex(),
             ];
         }
-        error_log(json_encode($mtokens));
         $processData->tokens = $mtokens;
         $processData->data = $dataStore->getData();
         $processData->save();
