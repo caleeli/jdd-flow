@@ -38,7 +38,7 @@ class PackageServiceProvider extends ServiceProvider
         // Register routes
         $this->loadRoutesFrom(__DIR__.'/../../routes/channels.php');
         // Workflow Engine
-        $this->app->bind(
+        $this->app->singleton(
             'workflow.engine',
             function () {
                 return new Manager;

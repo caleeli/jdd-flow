@@ -26,8 +26,7 @@ class ElementConsole implements ShouldBroadcastNow
         $this->instanceId = $instance->getId();
         $this->message = $message;
         foreach ($instance->getTokens() as $token) {
-            $properties = $token->getProperties();
-            if ($properties['element'] === $elementId && $token->getStatus() === 'ACTIVE') {
+            if ($token->getOwnerElement()->getId() === $elementId && $token->getStatus() === 'ACTIVE') {
                 $this->consoleTokens[] = $token->getId();
             }
         }

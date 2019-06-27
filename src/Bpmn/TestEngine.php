@@ -78,4 +78,14 @@ class TestEngine implements EngineInterface
         $this->repository = $repository;
         return $this;
     }
+
+    /**
+     * Clear instances from the current instance
+     *
+     * @return void
+     */
+    public function clearInstances()
+    {
+        $this->executionInstances = [];
+    }
 }

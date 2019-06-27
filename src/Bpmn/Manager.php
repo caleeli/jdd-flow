@@ -35,6 +35,12 @@ class Manager
     private $bpmnRepository;
 
     /**
+     *
+     * @var ExecutionInstanceRepository
+     */
+    private $instanceRepository;
+
+    /**
      * @var \ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface $process
      */
     private $process;
@@ -66,18 +72,15 @@ class Manager
 
     public function __construct()
     {
-        //$this->prepare();
-
-        //Se podria mover al app service provider
-        //$this->listenSaveEvents();
+        $this->repository = new Repository;
+        $this->dispatcher = app('events');
+        $this->engine = new TestEngine($this->repository, $this->dispatcher);
+        $this->listenSaveEvents();
     }
 
     private function prepare()
     {
-        $this->repository = new Repository;
-        $this->dispatcher = app('events');
-        $this->engine = new TestEngine($this->repository, $this->dispatcher);
-
+        $this->engine->clearInstances();
         //Load a BpmnFile Repository
         $this->bpmnRepository = new BpmnDocument();
         $this->bpmnRepository->setEngine($this->engine);
@@ -110,8 +113,7 @@ class Manager
         );
         $this->engine->setRepository($this->repository);
         $this->engine->setStorage($this->bpmnRepository);
-
-        $this->listenSaveEvents();
+        $this->instanceRepository = $this->repository->createExecutionInstanceRepository($this->bpmnRepository);
     }
 
     /**
@@ -324,10 +326,9 @@ class Manager
      */
     private function loadData(BpmnDocument $repository, $instanceId)
     {
-        $executionInstanceRepository = $this->engine->getRepository()->createExecutionInstanceRepository($repository);
         $processData = Process::findOrFail($instanceId);
         $this->loadProcess($processData->bpmn);
-        $executionInstanceRepository->setRawData([
+        $this->instanceRepository->setRawData([
             $instanceId => [
                 'id' => $instanceId,
                 'processId' => $processData->process_id,
@@ -338,11 +339,16 @@ class Manager
         return $processData;
     }
 
+    /**
+     * Listen for Workflow events
+     *
+     */
     private function listenSaveEvents()
     {
         $this->dispatcher->listen(
             ScriptTaskInterface::EVENT_SCRIPT_TASK_ACTIVATED,
             function (ScriptTaskInterface $scriptTask, TokenInterface $token) {
+                $this->saveProcessInstance($token->getInstance());
                 ScriptTaskJob::dispatch($token);
             }
         );
@@ -371,31 +377,9 @@ class Manager
      *
      * @return self
      */
-    private function saveProcessInstance(ExecutionInstance $instance)
+    private function saveProcessInstance(ExecutionInstanceInterface $instance)
     {
-        $id = $instance->getId();
-        $processData = Process::findOrNew($id);
-        if (!$processData->exists) {
-            $processData->id = $id;
-            $processData->process_id = $instance->getProcess()->getId();
-            $processData->bpmn = $this->bpmn;
-        }
-        $dataStore = $instance->getDataStore();
-        $tokens = $instance->getTokens();
-        $mtokens = [];
-        foreach ($tokens as $token) {
-            $element = $token->getOwnerElement();
-            $mtokens[$token->getId()] = [
-                'element' => $element->getId(),
-                'name' => $element->getName(),
-                'implementation' => $element->getProperty('implementation'),
-                'status' => $token->getStatus(),
-                'index' => $token->getIndex(),
-            ];
-        }
-        $processData->tokens = $mtokens;
-        $processData->data = $dataStore->getData();
-        $processData->save();
+        $this->instanceRepository->saveProcessInstance($instance, $this->bpmn);
         return $this;
     }
 

@@ -50,21 +50,21 @@ class ScriptTask extends ScriptTaskBase
     private function executeScript(TokenInterface $token, $script)
     {
         $result = true;
+        $filename = storage_path('app/' . uniqid('script_') . '.php');
+        $logfile = $token->getId() . '.txt';
+        ob_start(function ($buffer) use ($token, $logfile) {
+            $this->printOutput($buffer, $token, $logfile);
+        }, 1);
         try {
-            $filename = storage_path('app/' . uniqid('script_') . '.php');
             file_put_contents($filename, $script);
-            $logfile = $token->getId() . '.txt';
             Storage::disk('public')->delete($logfile);
-            ob_start(function ($buffer) use ($token, $logfile) {
-                $this->printOutput($buffer, $token, $logfile);
-            }, 1);
             $this->runCode($this->model, $filename);
-            ob_end_clean();
-            unlink($filename);
         } catch (Exception $e) {
             $result = false;
             $this->printOutput($e->getMessage(), $token, $logfile);
         }
+        ob_end_clean();
+        file_exists($filename) ? unlink($filename) : null;
         return $result;
     }
 
@@ -85,7 +85,7 @@ class ScriptTask extends ScriptTaskBase
     {
         if ($this->consoleElement) {
             Storage::disk('public')->append($logfile, $buffer);
-            event(new ElementConsole($token->getInstance(), $this->getConsoleElement(), [
+            app('events')->dispatch(new ElementConsole($token->getInstance(), $this->getConsoleElement(), [
                 'url' => '/storage/' . $logfile,
             ]));
         }

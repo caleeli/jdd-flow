@@ -2,6 +2,7 @@
 
 namespace JDD\Workflow\Bpmn;
 
+use JDD\Workflow\Models\Process;
 use ProcessMaker\Nayra\Contracts\Bpmn\ParticipantInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Contracts\Repositories\ExecutionInstanceRepositoryInterface;
@@ -45,14 +46,46 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $process->getTransitions($storage->getFactory());
 
         //Load tokens:
-        foreach ($data['tokens'] as $key => $tokenInfo) {
+        foreach ($data['tokens'] as $tokenInfo) {
             $token = $storage->getFactory()->getTokenRepository()->createTokenInstance();
-            $token->setId($key);
             $token->setProperties($tokenInfo);
             $element = $storage->getElementInstanceById($tokenInfo['element']);
             $element->addToken($instance, $token);
         }
         return $instance;
+    }
+
+    /**
+     * Save an instance
+     *
+     * @param ExecutionInstance $instance
+     */
+    public function saveProcessInstance(ExecutionInstance $instance, $bpmn)
+    {
+        $id = $instance->getId();
+        $processData = Process::findOrNew($id);
+        if (!$processData->exists) {
+            $processData->id = $id;
+            $processData->process_id = $instance->getProcess()->getId();
+            $processData->bpmn = $bpmn;
+        }
+        $dataStore = $instance->getDataStore();
+        $tokens = $instance->getTokens();
+        $mtokens = [];
+        foreach ($tokens as $token) {
+            $element = $token->getOwnerElement();
+            $mtokens[] = [
+                'id' => $token->getId(),
+                'element' => $element->getId(),
+                'name' => $element->getName(),
+                'implementation' => $element->getProperty('implementation'),
+                'status' => $token->getStatus(),
+                'index' => $token->getIndex(),
+            ];
+        }
+        $processData->tokens = $mtokens;
+        $processData->data = $dataStore->getData();
+        $processData->save();
     }
 
     /**

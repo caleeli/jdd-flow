@@ -7,8 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use JDD\Workflow\Facades\Workflow;
+use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 
 class ScriptTaskJob implements ShouldQueue
 {
