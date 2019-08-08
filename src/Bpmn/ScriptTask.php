@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Storage;
 use JDD\Workflow\Events\ElementConsole;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use JDD\Workflow\Models\Process as Model;
+use JDD\Workflow\Bpmn\ScriptFormats\PhpScript;
+use JDD\Workflow\Bpmn\ScriptFormats\BashScript;
+use JDD\Workflow\Bpmn\ScriptFormats\BaseScriptExecutor;
 
 /**
  * This activity will raise an exception when executed.
@@ -16,6 +19,11 @@ use JDD\Workflow\Models\Process as Model;
  */
 class ScriptTask extends ScriptTaskBase
 {
+    const scriptFormats = [
+        'application/x-php' => PhpScript::class,
+        'application/x-bash' => BashScript::class,
+    ];
+
     private $consoleElement = null;
     /**
      * Model instance for the process instance
@@ -32,7 +40,7 @@ class ScriptTask extends ScriptTaskBase
     public function runScript(TokenInterface $token)
     {
         //if the script runs correctly complete te activity, otherwise set the token to failed state
-        if ($this->executeScript($token, $this->getScript())) {
+        if ($this->executeScript($token, $this->getScript(), $this->getScriptFormat())) {
             $this->complete($token);
         } else {
             $token->setStatus(ActivityInterface::TOKEN_STATE_FAILING);
@@ -47,24 +55,21 @@ class ScriptTask extends ScriptTaskBase
      *
      * @return bool
      */
-    private function executeScript(TokenInterface $token, $script)
+    private function executeScript(TokenInterface $token, $script, $format)
     {
         $result = true;
-        $filename = storage_path('app/' . uniqid('script_') . '.php');
         $logfile = $token->getId() . '.txt';
         ob_start(function ($buffer) use ($token, $logfile) {
             $this->printOutput($buffer, $token, $logfile);
         }, 1);
         try {
-            file_put_contents($filename, $script);
             Storage::disk('public')->delete($logfile);
-            $this->runCode($this->model, $filename);
+            $this->runCode($this->model, $script, $format);
         } catch (Exception $e) {
             $result = false;
             $this->printOutput($e->getMessage(), $token, $logfile);
         }
         ob_end_clean();
-        file_exists($filename) ? unlink($filename) : null;
         return $result;
     }
 
@@ -76,9 +81,22 @@ class ScriptTask extends ScriptTaskBase
      *
      * @return mixed
      */
-    private function runCode($model, $__filename)
+    private function runCode($model, $script, $format)
     {
-        return require $__filename;
+        return $this->scriptFactory($format)->run($this, $model, $script);
+    }
+
+    /**
+     * Create a script exector for the required $format
+     *
+     * @param string $format
+     *
+     * @return BaseScriptExecutor
+     */
+    private function scriptFactory($format)
+    {
+        $class = self::scriptFormats[$format];
+        return new $class;
     }
 
     private function printOutput($buffer, TokenInterface $token, $logfile)

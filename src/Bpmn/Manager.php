@@ -317,6 +317,25 @@ class Manager
     }
 
     /**
+     * Get the process svg representation
+     *
+     * @param string $process
+     *
+     * @return string
+     */
+    public function getProcessSvg($processName)
+    {
+        foreach ($this->getProcessPaths() as $name => $filename) {
+            if ($processName === $name) {
+                $path = realpath($filename);
+                $info = pathinfo($path);
+                $svgfilename = $info['dirname'] . '/' . substr($info['basename'], 0, -strlen($info['extension'])) . 'svg';
+                return file_exists($svgfilename) ? $svgfilename : null;
+            }
+        }
+    }
+
+    /**
      * Carga los datos de la instancia almacenados en la BD.
      *
      * @param BpmnDocument $repository

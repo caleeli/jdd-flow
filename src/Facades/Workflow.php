@@ -15,10 +15,10 @@ use Illuminate\Support\Facades\Facade;
  * @method \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface callProcess(string $processURL, array $data)
  * @method \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface completeTask(string $instanceId, string $tokenId, array $data)
  * @method array getProcessPaths()
+ * @method string getProcessSvg(string $processName)
  */
 class Workflow extends Facade
 {
-
     protected static function getFacadeAccessor()
     {
         return 'workflow.engine';
