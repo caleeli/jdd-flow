@@ -3,6 +3,7 @@ export default {
     data() {
         return {
             dashboardPath: '/',
+            nextStepPath: '/process/next',
             socketListeners: [],
         };
     },
@@ -106,14 +107,20 @@ export default {
                 path: this.dashboardPath,
             });
         },
-        gotoNextStep(token) {
-            return this.processTasks(token).then(response => {
-                const tasks = response.data.response;
-                if (tasks.length === 1) {
-                    this.openTask(tasks[0]);
-                } else {
-                    this.gotoDashboard();
+        showTasks(token, tasks = []) {
+            this.$router.push({
+                path: this.tasksPath,
+                query: token,
+                props: {
+                    token,
+                    tasks
                 }
+            });
+        },
+        gotoNextStep(token) {
+            this.$router.push({
+                path: this.nextStepPath,
+                query: token
             });
         },
         validateToken(token) {
@@ -145,6 +152,18 @@ export default {
                     element.channel
                 ).stopListening(element.event);
             });
+        },
+        processData(variable, value) {
+            const instance = this.$route.query.instance;
+            this.$api.process.load(instance).then(process => {
+                const data = process.attributes.data;
+                if (data[variable]) {
+                    value = value instanceof Object && !(value instanceof Array)
+                        && data[variable] instanceof Object && !(data[variable] instanceof Array)
+                        ? Object.assign(value, data[variable]) : data[variable];
+                }
+            });
+            return value;
         },
     },
     destroyed: function () {

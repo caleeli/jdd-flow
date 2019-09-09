@@ -8,6 +8,8 @@ use Illuminate\Support\ServiceProvider;
 use JDD\Workflow\Bpmn\Manager;
 use JDD\Workflow\Console\Commands\UpdatePackage;
 use JDD\Workflow\Facades\Workflow;
+use JDD\Workflow\Models\Process;
+use JDD\Workflow\Observers\ProcessObserver;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
 
 class PackageServiceProvider extends ServiceProvider
@@ -44,6 +46,8 @@ class PackageServiceProvider extends ServiceProvider
                 return new Manager;
             }
         );
+        Process::observe(ProcessObserver::class);
+        // Publish assets
         $this->publishes([
             __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),
         ], 'assets');

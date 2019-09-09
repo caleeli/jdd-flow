@@ -173,6 +173,208 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 
 /***/ }),
 
+/***/ "05f0":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var core_js_modules_es6_object_assign__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("f751");
+/* harmony import */ var core_js_modules_es6_object_assign__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es6_object_assign__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__("ac6a");
+/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_1__);
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+  data: function data() {
+    return {
+      dashboardPath: '/',
+      nextStepPath: '/process/next',
+      socketListeners: []
+    };
+  },
+  computed: {
+    workflowToken: function workflowToken() {
+      return {
+        instance: this.$route.query.instance,
+        token: this.$route.query.token
+      };
+    }
+  },
+  methods: {
+    onProcessInstance: function onProcessInstance() {},
+    onProcessCanceled: function onProcessCanceled() {},
+    onTaskCompleted: function onTaskCompleted() {},
+    callProcess: function callProcess(processUrl) {
+      var _this = this;
+
+      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return window.axios.post('process', {
+        call: {
+          method: 'call',
+          parameters: {
+            processUrl: processUrl,
+            data: data
+          }
+        }
+      }).then(function (response) {
+        var instance = response.data.response;
+
+        _this.onProcessInstance(instance);
+
+        _this.gotoNextStep({
+          instance: instance.id,
+          token: null
+        });
+
+        return response;
+      });
+    },
+    startProcess: function startProcess(processUrl, start) {
+      var _this2 = this;
+
+      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return window.axios.post('process', {
+        call: {
+          method: 'start',
+          parameters: {
+            processUrl: processUrl,
+            start: start,
+            data: data
+          }
+        }
+      }).then(function (response) {
+        var instance = response.data.response;
+
+        _this2.onProcessInstance(instance);
+
+        _this2.gotoNextStep({
+          instance: instance.id,
+          token: null
+        });
+
+        return response;
+      });
+    },
+    completeTask: function completeTask() {
+      var _this3 = this;
+
+      var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var token = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.workflowToken;
+      this.validateToken(token);
+      return window.axios.post('process/' + token.instance, {
+        call: {
+          method: 'completeTask',
+          parameters: {
+            token: token.token,
+            data: data
+          }
+        }
+      }).then(function (response) {
+        _this3.onTaskCompleted(token);
+
+        _this3.gotoNextStep(token);
+
+        return response;
+      });
+    },
+    cancelProcess: function cancelProcess() {
+      var _this4 = this;
+
+      var token = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.workflowToken;
+      this.validateToken(token);
+      return window.axios.post('process/' + token.instance, {
+        call: {
+          method: 'cancel',
+          parameters: {}
+        }
+      }).then(function (response) {
+        _this4.onProcessCanceled(token);
+
+        _this4.gotoDashboard();
+
+        return response;
+      });
+    },
+    processTasks: function processTasks(token) {
+      return window.axios.post('process/' + token.instance, {
+        call: {
+          method: 'tasks',
+          parameters: {}
+        }
+      });
+    },
+    openTask: function openTask(task) {
+      this.$router.push({
+        path: task.path,
+        query: task.token
+      });
+    },
+    gotoDashboard: function gotoDashboard() {
+      this.$router.push({
+        path: this.dashboardPath
+      });
+    },
+    showTasks: function showTasks(token) {
+      var tasks = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+      this.$router.push({
+        path: this.tasksPath,
+        query: token,
+        props: {
+          token: token,
+          tasks: tasks
+        }
+      });
+    },
+    gotoNextStep: function gotoNextStep(token) {
+      this.$router.push({
+        path: this.nextStepPath,
+        query: token
+      });
+    },
+    validateToken: function validateToken(token) {
+      var valid = token && token instanceof Object && token.instance && token.token;
+
+      if (!valid) {
+        throw "Invalid token: " + JSON.stringify(token);
+      }
+    },
+    addSocketListener: function addSocketListener(channel, event, callback) {
+      this.socketListeners.push({
+        channel: channel,
+        event: event
+      });
+      window.Echo.private(channel).listen(event, callback);
+    },
+    listenConsole: function listenConsole(callback) {
+      var instance = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.instance;
+      var token = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.token;
+      var channel = "Process.".concat(instance, ".Token.").concat(token);
+      this.addSocketListener(channel, ".ElementConsole", callback);
+    },
+    cleanSocketListeners: function cleanSocketListeners() {
+      // Stop registered socket listeners 
+      this.socketListeners.forEach(function (element) {
+        window.Echo.private(element.channel).stopListening(element.event);
+      });
+    },
+    processData: function processData(variable, value) {
+      var instance = this.$route.query.instance;
+      this.$api.process.load(instance).then(function (process) {
+        var data = process.attributes.data;
+
+        if (data[variable]) {
+          value = value instanceof Object && !(value instanceof Array) && data[variable] instanceof Object && !(data[variable] instanceof Array) ? Object.assign(value, data[variable]) : data[variable];
+        }
+      });
+      return value;
+    }
+  },
+  destroyed: function destroyed() {
+    this.cleanSocketListeners();
+  }
+});
+
+/***/ }),
+
 /***/ "0d58":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -217,6 +419,14 @@ var is = isObject(document) && isObject(document.createElement);
 module.exports = function (it) {
   return is ? document.createElement(it) : {};
 };
+
+
+/***/ }),
+
+/***/ "2621":
+/***/ (function(module, exports) {
+
+exports.f = Object.getOwnPropertySymbols;
 
 
 /***/ }),
@@ -441,6 +651,14 @@ module.exports = function (it) {
 
 /***/ }),
 
+/***/ "52a7":
+/***/ (function(module, exports) {
+
+exports.f = {}.propertyIsEnumerable;
+
+
+/***/ }),
+
 /***/ "5537":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -574,6 +792,52 @@ module.exports = function (it, S) {
   if (!S && typeof (fn = it.toString) == 'function' && !isObject(val = fn.call(it))) return val;
   throw TypeError("Can't convert object to primitive value");
 };
+
+
+/***/ }),
+
+/***/ "7333":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// 19.1.2.1 Object.assign(target, source, ...)
+var DESCRIPTORS = __webpack_require__("9e1e");
+var getKeys = __webpack_require__("0d58");
+var gOPS = __webpack_require__("2621");
+var pIE = __webpack_require__("52a7");
+var toObject = __webpack_require__("4bf8");
+var IObject = __webpack_require__("626a");
+var $assign = Object.assign;
+
+// should work with symbols and should have deterministic property order (V8 bug)
+module.exports = !$assign || __webpack_require__("79e5")(function () {
+  var A = {};
+  var B = {};
+  // eslint-disable-next-line no-undef
+  var S = Symbol();
+  var K = 'abcdefghijklmnopqrst';
+  A[S] = 7;
+  K.split('').forEach(function (k) { B[k] = k; });
+  return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
+}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+  var T = toObject(target);
+  var aLen = arguments.length;
+  var index = 1;
+  var getSymbols = gOPS.f;
+  var isEnum = pIE.f;
+  while (aLen > index) {
+    var S = IObject(arguments[index++]);
+    var keys = getSymbols ? getKeys(S).concat(getSymbols(S)) : getKeys(S);
+    var length = keys.length;
+    var j = 0;
+    var key;
+    while (length > j) {
+      key = keys[j++];
+      if (!DESCRIPTORS || isEnum.call(S, key)) T[key] = S[key];
+    }
+  } return T;
+} : $assign;
 
 
 /***/ }),
@@ -735,6 +999,218 @@ module.exports = !__webpack_require__("79e5")(function () {
   return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
 });
 
+
+/***/ }),
+
+/***/ "9f44":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"77c6c74a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=template&id=46147147&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('panel',{staticClass:"panel-success",attrs:{"name":"","icon":"fas fa-book-reader"}},[_c('table',{staticClass:"table table-bordered"},[_c('thead',[_c('tr',[_c('th',{attrs:{"scope":"col"}}),_c('th',{attrs:{"scope":"col"}},[_vm._v("Status")])])]),_c('tbody',_vm._l((_vm.tasks),function(task,i){return _c('tr',{key:i},[_c('td',[_c('router-link',{attrs:{"to":{path: task.path, params: task.token}}},[_vm._v(_vm._s(task.name))])],1),_c('td',[_vm._v(_vm._s(task.status))])])}),0)])])}
+var staticRenderFns = []
+
+
+// CONCATENATED MODULE: ./src/routes/NextStep.vue?vue&type=template&id=46147147&
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
+var web_dom_iterable = __webpack_require__("ac6a");
+
+// EXTERNAL MODULE: ./src/components/mixins/workflow.js
+var workflow = __webpack_require__("05f0");
+
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=script&lang=js&
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ var NextStepvue_type_script_lang_js_ = ({
+  name: "NextStep",
+  path: "/process/next",
+  mixins: [workflow["a" /* default */]],
+  data: function data() {
+    return {
+      tasks: []
+    };
+  },
+  methods: {
+    updateTasks: function updateTasks(tasks) {
+      var actives = [];
+      tasks.forEach(function (task) {
+        task.status === "ACTIVE" ? actives.push(task) : null;
+      });
+
+      if (actives.length === 1 && actives[0].path) {
+        this.openTask(tasks[0]);
+      } else if (tasks.length === 0) {
+        this.gotoDashboard();
+      } else {
+        this.$set(this, "tasks", tasks);
+      }
+    },
+    loadTasks: function loadTasks() {
+      var _this = this;
+
+      this.processTasks(this.workflowToken).then(function (response) {
+        var tasks = response.data.response;
+
+        _this.updateTasks(tasks);
+      });
+    }
+  },
+  beforeRouteEnter: function beforeRouteEnter(to, from, next) {
+    next(function (vm) {
+      vm.loadTasks();
+    });
+  },
+  mounted: function mounted() {
+    var _this2 = this;
+
+    var instance = this.workflowToken.instance;
+    var channel = "Process.".concat(instance);
+    this.addSocketListener(channel, ".ProcessUpdated", function (event) {
+      _this2.updateTasks(event.tasks);
+    });
+  }
+});
+// CONCATENATED MODULE: ./src/routes/NextStep.vue?vue&type=script&lang=js&
+ /* harmony default export */ var routes_NextStepvue_type_script_lang_js_ = (NextStepvue_type_script_lang_js_); 
+// CONCATENATED MODULE: ./node_modules/vue-loader/lib/runtime/componentNormalizer.js
+/* globals __VUE_SSR_CONTEXT__ */
+
+// IMPORTANT: Do NOT use ES2015 features in this file (except for modules).
+// This module is a runtime utility for cleaner component module output and will
+// be included in the final webpack user bundle.
+
+function normalizeComponent (
+  scriptExports,
+  render,
+  staticRenderFns,
+  functionalTemplate,
+  injectStyles,
+  scopeId,
+  moduleIdentifier, /* server only */
+  shadowMode /* vue-cli only */
+) {
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (render) {
+    options.render = render
+    options.staticRenderFns = staticRenderFns
+    options._compiled = true
+  }
+
+  // functional template
+  if (functionalTemplate) {
+    options.functional = true
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = 'data-v-' + scopeId
+  }
+
+  var hook
+  if (moduleIdentifier) { // server build
+    hook = function (context) {
+      // 2.3 injection
+      context =
+        context || // cached call
+        (this.$vnode && this.$vnode.ssrContext) || // stateful
+        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
+      // 2.2 with runInNewContext: true
+      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
+        context = __VUE_SSR_CONTEXT__
+      }
+      // inject component styles
+      if (injectStyles) {
+        injectStyles.call(this, context)
+      }
+      // register component module identifier for async chunk inferrence
+      if (context && context._registeredComponents) {
+        context._registeredComponents.add(moduleIdentifier)
+      }
+    }
+    // used by ssr in case component is cached and beforeCreate
+    // never gets called
+    options._ssrRegister = hook
+  } else if (injectStyles) {
+    hook = shadowMode
+      ? function () { injectStyles.call(this, this.$root.$options.shadowRoot) }
+      : injectStyles
+  }
+
+  if (hook) {
+    if (options.functional) {
+      // for template-only hot-reload because in that case the render fn doesn't
+      // go through the normalizer
+      options._injectStyles = hook
+      // register for functioal component in vue file
+      var originalRender = options.render
+      options.render = function renderWithStyleInjection (h, context) {
+        hook.call(context)
+        return originalRender(h, context)
+      }
+    } else {
+      // inject component registration as beforeCreate hook
+      var existing = options.beforeCreate
+      options.beforeCreate = existing
+        ? [].concat(existing, hook)
+        : [hook]
+    }
+  }
+
+  return {
+    exports: scriptExports,
+    options: options
+  }
+}
+
+// CONCATENATED MODULE: ./src/routes/NextStep.vue
+
+
+
+
+
+/* normalize component */
+
+var component = normalizeComponent(
+  routes_NextStepvue_type_script_lang_js_,
+  render,
+  staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* harmony default export */ var NextStep = __webpack_exports__["default"] = (component.exports);
 
 /***/ }),
 
@@ -1030,6 +1506,47 @@ module.exports = (
 
 /***/ }),
 
+/***/ "f751":
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.3.1 Object.assign(target, source)
+var $export = __webpack_require__("5ca1");
+
+$export($export.S + $export.F, 'Object', { assign: __webpack_require__("7333") });
+
+
+/***/ }),
+
+/***/ "f97e":
+/***/ (function(module, exports, __webpack_require__) {
+
+var map = {
+	"./NextStep.vue": "9f44"
+};
+
+
+function webpackContext(req) {
+	var id = webpackContextResolve(req);
+	return __webpack_require__(id);
+}
+function webpackContextResolve(req) {
+	var id = map[req];
+	if(!(id + 1)) { // check for number or string
+		var e = new Error("Cannot find module '" + req + "'");
+		e.code = 'MODULE_NOT_FOUND';
+		throw e;
+	}
+	return id;
+}
+webpackContext.keys = function webpackContextKeys() {
+	return Object.keys(map);
+};
+webpackContext.resolve = webpackContextResolve;
+module.exports = webpackContext;
+webpackContext.id = "f97e";
+
+/***/ }),
+
 /***/ "fa5b":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1073,184 +1590,30 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
 var web_dom_iterable = __webpack_require__("ac6a");
 
-// CONCATENATED MODULE: ./src/components/mixins/workflow.js
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es6.array.iterator.js
+var es6_array_iterator = __webpack_require__("cadf");
 
-/* harmony default export */ var workflow = ({
-  data: function data() {
-    return {
-      dashboardPath: '/',
-      socketListeners: []
-    };
-  },
-  computed: {
-    workflowToken: function workflowToken() {
-      return {
-        instance: this.$route.query.instance,
-        token: this.$route.query.token
-      };
-    }
-  },
-  methods: {
-    onProcessInstance: function onProcessInstance() {},
-    onProcessCanceled: function onProcessCanceled() {},
-    onTaskCompleted: function onTaskCompleted() {},
-    callProcess: function callProcess(processUrl) {
-      var _this = this;
+// EXTERNAL MODULE: ./src/components/mixins/workflow.js
+var workflow = __webpack_require__("05f0");
 
-      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      return window.axios.post('process', {
-        call: {
-          method: 'call',
-          parameters: {
-            processUrl: processUrl,
-            data: data
-          }
-        }
-      }).then(function (response) {
-        var instance = response.data.response;
+// CONCATENATED MODULE: ./src/index.js
 
-        _this.onProcessInstance(instance);
 
-        _this.gotoNextStep({
-          instance: instance.id,
-          token: null
-        });
 
-        return response;
-      });
-    },
-    startProcess: function startProcess(processUrl, start) {
-      var _this2 = this;
+window.workflowMixin = workflow["a" /* default */];
+window.addEventListener('load', function () {
+  // Register ../routes/* as routes
+  var files = __webpack_require__("f97e");
 
-      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      return window.axios.post('process', {
-        call: {
-          method: 'start',
-          parameters: {
-            processUrl: processUrl,
-            start: start,
-            data: data
-          }
-        }
-      }).then(function (response) {
-        var instance = response.data.response;
-
-        _this2.onProcessInstance(instance);
-
-        _this2.gotoNextStep({
-          instance: instance.id,
-          token: null
-        });
-
-        return response;
-      });
-    },
-    completeTask: function completeTask() {
-      var _this3 = this;
-
-      var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      var token = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.workflowToken;
-      this.validateToken(token);
-      return window.axios.post('process/' + token.instance, {
-        call: {
-          method: 'completeTask',
-          parameters: {
-            token: token.token,
-            data: data
-          }
-        }
-      }).then(function (response) {
-        _this3.onTaskCompleted(token);
-
-        _this3.gotoNextStep(token);
-
-        return response;
-      });
-    },
-    cancelProcess: function cancelProcess() {
-      var _this4 = this;
-
-      var token = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.workflowToken;
-      this.validateToken(token);
-      return window.axios.post('process/' + token.instance, {
-        call: {
-          method: 'cancel',
-          parameters: {}
-        }
-      }).then(function (response) {
-        _this4.onProcessCanceled(token);
-
-        _this4.gotoDashboard();
-
-        return response;
-      });
-    },
-    processTasks: function processTasks(token) {
-      return window.axios.post('process/' + token.instance, {
-        call: {
-          method: 'tasks',
-          parameters: {}
-        }
-      });
-    },
-    openTask: function openTask(task) {
-      this.$router.push({
-        path: task.path,
-        query: task.token
-      });
-    },
-    gotoDashboard: function gotoDashboard() {
-      this.$router.push({
-        path: this.dashboardPath
-      });
-    },
-    gotoNextStep: function gotoNextStep(token) {
-      var _this5 = this;
-
-      return this.processTasks(token).then(function (response) {
-        var tasks = response.data.response;
-
-        if (tasks.length === 1) {
-          _this5.openTask(tasks[0]);
-        } else {
-          _this5.gotoDashboard();
-        }
-      });
-    },
-    validateToken: function validateToken(token) {
-      var valid = token && token instanceof Object && token.instance && token.token;
-
-      if (!valid) {
-        throw "Invalid token: " + JSON.stringify(token);
-      }
-    },
-    addSocketListener: function addSocketListener(channel, event, callback) {
-      this.socketListeners.push({
-        channel: channel,
-        event: event
-      });
-      window.Echo.private(channel).listen(event, callback);
-    },
-    listenConsole: function listenConsole(callback) {
-      var instance = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.instance;
-      var token = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.token;
-      var channel = "Process.".concat(instance, ".Token.").concat(token);
-      this.addSocketListener(channel, ".ElementConsole", callback);
-    },
-    cleanSocketListeners: function cleanSocketListeners() {
-      // Stop registered socket listeners 
-      this.socketListeners.forEach(function (element) {
-        window.Echo.private(element.channel).stopListening(element.event);
-      });
-    }
-  },
-  destroyed: function destroyed() {
-    this.cleanSocketListeners();
-  }
+  files.keys().map(function (key) {
+    // Register component as route
+    window.router.addRoutes([{
+      path: files(key).default.path,
+      component: files(key).default,
+      props: true
+    }]);
+  });
 });
-// CONCATENATED MODULE: ./src/components/index.js
-
-window.workflowMixin = workflow;
 // CONCATENATED MODULE: ./node_modules/@vue/cli-service/lib/commands/build/entry-lib-no-default.js
 
 

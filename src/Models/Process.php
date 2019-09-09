@@ -157,13 +157,20 @@ class Process extends Model
         ];
     }
 
+    /**
+     * Get active task in process
+     *
+     * @return array
+     */
     public function tasks()
     {
         $tasks = [];
         foreach ($this->tokens as $token) {
-            if ($token['status']==='ACTIVE' && $token['implementation']) {
+            if ($token['status'] !== 'CLOSED') {
                 $tasks[] = [
-                    'path' => substr($token['implementation'], 1),
+                    'name' => $token['name'] ?? '',
+                    'status' => $token['status'],
+                    'path' => $token['implementation'] ? substr($token['implementation'], 1) : null,
                     'token' => [
                         'instance' => $this->id,
                         'token' => $token['id'],

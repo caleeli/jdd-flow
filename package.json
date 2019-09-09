@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --target lib --name vue-jdd-flow ./src/components/index.js",
+    "build": "vue-cli-service build --target lib --name vue-jdd-flow ./src/index.js",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

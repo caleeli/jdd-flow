@@ -3,15 +3,16 @@
 namespace JDD\Workflow\Bpmn;
 
 use Exception;
-use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
-use ProcessMaker\Nayra\Bpmn\Models\ScriptTask as ScriptTaskBase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use JDD\Workflow\Events\ElementConsole;
-use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
-use JDD\Workflow\Models\Process as Model;
-use JDD\Workflow\Bpmn\ScriptFormats\PhpScript;
-use JDD\Workflow\Bpmn\ScriptFormats\BashScript;
 use JDD\Workflow\Bpmn\ScriptFormats\BaseScriptExecutor;
+use JDD\Workflow\Bpmn\ScriptFormats\BashScript;
+use JDD\Workflow\Bpmn\ScriptFormats\PhpScript;
+use JDD\Workflow\Events\ElementConsole;
+use JDD\Workflow\Models\Process as Model;
+use ProcessMaker\Nayra\Bpmn\Models\ScriptTask as ScriptTaskBase;
+use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
+use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 
 /**
  * This activity will raise an exception when executed.
@@ -66,6 +67,7 @@ class ScriptTask extends ScriptTaskBase
             Storage::disk('public')->delete($logfile);
             $this->runCode($this->model, $script, $format);
         } catch (Exception $e) {
+            Log::error($e->getMessage());
             $result = false;
             $this->printOutput($e->getMessage(), $token, $logfile);
         }
