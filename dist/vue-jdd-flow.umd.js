@@ -1008,12 +1008,12 @@ module.exports = !__webpack_require__("79e5")(function () {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"77c6c74a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=template&id=46147147&
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('panel',{staticClass:"panel-success",attrs:{"name":"","icon":"fas fa-book-reader"}},[_c('table',{staticClass:"table table-bordered"},[_c('thead',[_c('tr',[_c('th',{attrs:{"scope":"col"}}),_c('th',{attrs:{"scope":"col"}},[_vm._v("Status")])])]),_c('tbody',_vm._l((_vm.tasks),function(task,i){return _c('tr',{key:i},[_c('td',[_c('router-link',{attrs:{"to":{path: task.path, params: task.token}}},[_vm._v(_vm._s(task.name))])],1),_c('td',[_vm._v(_vm._s(task.status))])])}),0)])])}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"77c6c74a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=template&id=642b1e87&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('panel',{staticClass:"panel-success",attrs:{"name":"","icon":"fas fa-book-reader"}},[_c('table',{staticClass:"table table-bordered"},[_c('thead',[_c('tr',[_c('th',{attrs:{"scope":"col"}}),_c('th',{attrs:{"scope":"col"}},[_vm._v("Status")])])]),_c('tbody',_vm._l((_vm.tasks),function(task,i){return _c('tr',{key:i},[_c('td',[_c('router-link',{attrs:{"to":{path: task.path, query: task.token}}},[_vm._v(_vm._s(task.name))])],1),_c('td',[_vm._v(_vm._s(task.status))])])}),0)])])}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/routes/NextStep.vue?vue&type=template&id=46147147&
+// CONCATENATED MODULE: ./src/routes/NextStep.vue?vue&type=template&id=642b1e87&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
 var web_dom_iterable = __webpack_require__("ac6a");

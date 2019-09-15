@@ -10,7 +10,7 @@
       <tbody>
         <tr v-for="(task, i) in tasks" :key="i">
           <td>
-            <router-link :to="{path: task.path, params: task.token}">{{task.name}}</router-link>
+            <router-link :to="{path: task.path, query: task.token}">{{task.name}}</router-link>
           </td>
           <td>{{task.status}}</td>
         </tr>
