@@ -176,7 +176,7 @@ class Manager
         $this->processData = $this->loadData($this->bpmnRepository, $instanceId);
 
         //Process and instance
-        $instance = $this->engine->loadExecutionInstance($instanceId);
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
 
         $links = [];
         foreach ($instance->getTokens() as $token) {
@@ -202,7 +202,7 @@ class Manager
         $this->loadData($this->bpmnRepository, $instanceId);
 
         // Process and instance
-        $instance = $this->engine->loadExecutionInstance($instanceId);
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
 
         // Update data
         foreach ($data as $key => $value) {
@@ -241,7 +241,7 @@ class Manager
         $processData->save();
 
         //Return the instance id
-        $instance = $this->engine->loadExecutionInstance($instanceId);
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
         return $instance;
     }
 
@@ -260,7 +260,7 @@ class Manager
         $model = $this->loadData($this->bpmnRepository, $instanceId);
 
         // Process and instance
-        $instance = $this->engine->loadExecutionInstance($instanceId);
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
 
         // Complete task
         foreach ($instance->getTokens() as $token) {
