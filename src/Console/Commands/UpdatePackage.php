@@ -29,6 +29,7 @@ class UpdatePackage extends Command
      */
     public function handle()
     {
+        set_time_limit(0);
         $this->info('Build asset: ' . $this->signature);
         $dir = getcwd();
         chdir(__DIR__ . '/../../../');
