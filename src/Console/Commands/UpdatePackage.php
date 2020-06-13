@@ -29,13 +29,6 @@ class UpdatePackage extends Command
      */
     public function handle()
     {
-        set_time_limit(0);
-        $this->info('Build asset: ' . $this->signature);
-        $dir = getcwd();
-        chdir(__DIR__ . '/../../../');
-        file_exists('node_modules') ?: exec('npm install');
-        exec('npm run build');
-        chdir($dir);
         $this->call('vendor:publish', ['--provider' => PackageServiceProvider::class, '--force' => true, '--tag' => 'assets']);
     }
 }
