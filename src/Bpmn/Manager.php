@@ -112,7 +112,6 @@ class Manager
             BpmnDocument::SKIP_ELEMENT
         );
         $this->engine->setRepository($this->repository);
-        $this->engine->setStorage($this->bpmnRepository);
         $this->instanceRepository = $this->repository->createExecutionInstanceRepository($this->bpmnRepository);
     }
 
