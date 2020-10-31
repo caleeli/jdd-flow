@@ -1,6 +1,6 @@
-import workflowMixin from './components/mixins/workflow';
+import WorkflowMixin from './components/mixins/workflow';
 
-window.workflowMixin = workflowMixin;
+window.WorkflowMixin = WorkflowMixin;
 
 window.addEventListener('load', () => {
     // Register ../routes/* as routes

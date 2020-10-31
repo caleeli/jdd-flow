@@ -61,7 +61,7 @@ class FormalExpression implements FormalExpressionInterface
         return $this->getDateExpression()
             ?: $this->getCycleExpression()
             ?: $this->getDurationExpression()
-            ?: eval('return ' . $this->getBody() . ';');
+            ?: eval((substr($this->getBody(), 0, 5) === '<?php' ? '?>' : 'return ') . $this->getBody() . ';');
     }
 
     /**

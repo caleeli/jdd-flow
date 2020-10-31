@@ -15,7 +15,6 @@ use ProcessMaker\Test\Models\TestTwoClassWithArgumentsConstructor;
  */
 class Repository implements RepositoryInterface
 {
-
     use RepositoryTrait;
 
     /**
@@ -92,5 +91,20 @@ class Repository implements RepositoryInterface
             $this->tokenRepo = new TokenRepository();
         }
         return $this->tokenRepo;
+    }
+
+    public function createPotentialOwner()
+    {
+        return new PotentialOwner();
+    }
+
+    public function createResourceAssignmentExpression()
+    {
+        return new ResourceAssignmentExpression();
+    }
+
+    public function createHumanPerformer()
+    {
+        return new HumanPerformer();
     }
 }

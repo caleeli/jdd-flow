@@ -6,3 +6,6 @@ Broadcast::channel('Process.{id}.Token.{token}', function ($user, $id, $token) {
 Broadcast::channel('Process.{id}', function ($user, $id) {
     return true;
 });
+Broadcast::channel('Bpmn', function ($user) {
+    return true;
+});

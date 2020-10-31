@@ -168,166 +168,50 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var core_js_modules_es6_object_assign__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("f751");
-/* harmony import */ var core_js_modules_es6_object_assign__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es6_object_assign__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__("ac6a");
-/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_1__);
-
+/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("ac6a");
+/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_0__);
 
 /* harmony default export */ __webpack_exports__["a"] = ({
   data: function data() {
+    var _this = this;
+
     return {
-      dashboardPath: '/',
-      nextStepPath: '/process/next',
-      socketListeners: []
+      socketListeners: [],
+      bpmn: {
+        // Events
+        NewProcess: null,
+        // Methods
+        tokens: this.$api.process_tokens,
+        call: function call(process) {
+          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+          return _this.$api.process.call('call', {
+            process: process,
+            data: data
+          });
+        },
+        complete: function complete(token, data) {
+          return _this.$api.process[token.attributes.process_id].call('complete', {
+            tokenId: token.id,
+            data: data
+          });
+        },
+        rowCall: function rowCall(process) {
+          var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+          return _this.$api.process.rowCall('call', {
+            process: process,
+            data: data
+          });
+        },
+        rowComplete: function rowComplete(token, data) {
+          return _this.$api.process[token.attributes.process_id].rowCall('complete', {
+            tokenId: token.id,
+            data: data
+          });
+        }
+      }
     };
   },
-  computed: {
-    workflowToken: function workflowToken() {
-      return {
-        instance: this.$route.query.instance,
-        token: this.$route.query.token
-      };
-    }
-  },
   methods: {
-    onProcessInstance: function onProcessInstance() {},
-    onProcessCanceled: function onProcessCanceled() {},
-    onTaskCompleted: function onTaskCompleted() {},
-    callProcess: function callProcess(processUrl) {
-      var _this = this;
-
-      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      return window.axios.post('process', {
-        call: {
-          method: 'call',
-          parameters: {
-            processUrl: processUrl,
-            data: data
-          }
-        }
-      }).then(function (response) {
-        var instance = response.data.response;
-
-        _this.onProcessInstance(instance);
-
-        _this.gotoNextStep({
-          instance: instance.id,
-          token: null
-        });
-
-        return response;
-      });
-    },
-    startProcess: function startProcess(processUrl, start) {
-      var _this2 = this;
-
-      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      return window.axios.post('process', {
-        call: {
-          method: 'start',
-          parameters: {
-            processUrl: processUrl,
-            start: start,
-            data: data
-          }
-        }
-      }).then(function (response) {
-        var instance = response.data.response;
-
-        _this2.onProcessInstance(instance);
-
-        _this2.gotoNextStep({
-          instance: instance.id,
-          token: null
-        });
-
-        return response;
-      });
-    },
-    completeTask: function completeTask() {
-      var _this3 = this;
-
-      var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      var token = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.workflowToken;
-      this.validateToken(token);
-      return window.axios.post('process/' + token.instance, {
-        call: {
-          method: 'completeTask',
-          parameters: {
-            token: token.token,
-            data: data
-          }
-        }
-      }).then(function (response) {
-        _this3.onTaskCompleted(token);
-
-        _this3.gotoNextStep(token);
-
-        return response;
-      });
-    },
-    cancelProcess: function cancelProcess() {
-      var _this4 = this;
-
-      var token = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.workflowToken;
-      this.validateToken(token);
-      return window.axios.post('process/' + token.instance, {
-        call: {
-          method: 'cancel',
-          parameters: {}
-        }
-      }).then(function (response) {
-        _this4.onProcessCanceled(token);
-
-        _this4.gotoDashboard();
-
-        return response;
-      });
-    },
-    processTasks: function processTasks(token) {
-      return window.axios.post('process/' + token.instance, {
-        call: {
-          method: 'tasks',
-          parameters: {}
-        }
-      });
-    },
-    openTask: function openTask(task) {
-      this.$router.push({
-        path: task.path,
-        query: task.token
-      });
-    },
-    gotoDashboard: function gotoDashboard() {
-      this.$router.push({
-        path: this.dashboardPath
-      });
-    },
-    showTasks: function showTasks(token) {
-      var tasks = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-      this.$router.push({
-        path: this.tasksPath,
-        query: token,
-        props: {
-          token: token,
-          tasks: tasks
-        }
-      });
-    },
-    gotoNextStep: function gotoNextStep(token) {
-      this.$router.push({
-        path: this.nextStepPath,
-        query: token
-      });
-    },
-    validateToken: function validateToken(token) {
-      var valid = token && token instanceof Object && token.instance && token.token;
-
-      if (!valid) {
-        throw "Invalid token: " + JSON.stringify(token);
-      }
-    },
     addSocketListener: function addSocketListener(channel, event, callback) {
       this.socketListeners.push({
         channel: channel,
@@ -335,7 +219,7 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
       });
       window.Echo.private(channel).listen(event, callback);
     },
-    listenConsole: function listenConsole(callback) {
+    listenBpmn: function listenBpmn(callback) {
       var instance = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.instance;
       var token = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.token;
       var channel = "Process.".concat(instance, ".Token.").concat(token);
@@ -346,21 +230,14 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
       this.socketListeners.forEach(function (element) {
         window.Echo.private(element.channel).stopListening(element.event);
       });
-    },
-    processData: function processData(variable, value) {
-      var instance = this.$route.query.instance;
-      this.$api.process.load(instance).then(function (process) {
-        var data = process.attributes.data;
-
-        if (data[variable]) {
-          value = value instanceof Object && !(value instanceof Array) && data[variable] instanceof Object && !(data[variable] instanceof Array) ? Object.assign(value, data[variable]) : data[variable];
-        }
-      });
-      return value;
     }
   },
-  destroyed: function destroyed() {
-    this.cleanSocketListeners();
+  mounted: function mounted() {
+    var _this2 = this;
+
+    this.addSocketListener('Bpmn', '.NewProcess', function (data) {
+      _this2.bpmn.NewProcess = data;
+    });
   }
 });
 
@@ -410,14 +287,6 @@ var is = isObject(document) && isObject(document.createElement);
 module.exports = function (it) {
   return is ? document.createElement(it) : {};
 };
-
-
-/***/ }),
-
-/***/ "2621":
-/***/ (function(module, exports) {
-
-exports.f = Object.getOwnPropertySymbols;
 
 
 /***/ }),
@@ -642,14 +511,6 @@ module.exports = function (it) {
 
 /***/ }),
 
-/***/ "52a7":
-/***/ (function(module, exports) {
-
-exports.f = {}.propertyIsEnumerable;
-
-
-/***/ }),
-
 /***/ "5537":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -787,52 +648,6 @@ module.exports = function (it, S) {
 
 /***/ }),
 
-/***/ "7333":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-// 19.1.2.1 Object.assign(target, source, ...)
-var DESCRIPTORS = __webpack_require__("9e1e");
-var getKeys = __webpack_require__("0d58");
-var gOPS = __webpack_require__("2621");
-var pIE = __webpack_require__("52a7");
-var toObject = __webpack_require__("4bf8");
-var IObject = __webpack_require__("626a");
-var $assign = Object.assign;
-
-// should work with symbols and should have deterministic property order (V8 bug)
-module.exports = !$assign || __webpack_require__("79e5")(function () {
-  var A = {};
-  var B = {};
-  // eslint-disable-next-line no-undef
-  var S = Symbol();
-  var K = 'abcdefghijklmnopqrst';
-  A[S] = 7;
-  K.split('').forEach(function (k) { B[k] = k; });
-  return $assign({}, A)[S] != 7 || Object.keys($assign({}, B)).join('') != K;
-}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
-  var T = toObject(target);
-  var aLen = arguments.length;
-  var index = 1;
-  var getSymbols = gOPS.f;
-  var isEnum = pIE.f;
-  while (aLen > index) {
-    var S = IObject(arguments[index++]);
-    var keys = getSymbols ? getKeys(S).concat(getSymbols(S)) : getKeys(S);
-    var length = keys.length;
-    var j = 0;
-    var key;
-    while (length > j) {
-      key = keys[j++];
-      if (!DESCRIPTORS || isEnum.call(S, key)) T[key] = S[key];
-    }
-  } return T;
-} : $assign;
-
-
-/***/ }),
-
 /***/ "7726":
 /***/ (function(module, exports) {
 
@@ -891,7 +706,7 @@ module.exports = function (it, tag, stat) {
 /***/ "8378":
 /***/ (function(module, exports) {
 
-var core = module.exports = { version: '2.6.9' };
+var core = module.exports = { version: '2.6.11' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 
@@ -997,9 +812,10 @@ module.exports = !__webpack_require__("79e5")(function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+// ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"77c6c74a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=template&id=642b1e87&
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"4faee2ac-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=template&id=642b1e87&
 var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('panel',{staticClass:"panel-success",attrs:{"name":"","icon":"fas fa-book-reader"}},[_c('table',{staticClass:"table table-bordered"},[_c('thead',[_c('tr',[_c('th',{attrs:{"scope":"col"}}),_c('th',{attrs:{"scope":"col"}},[_vm._v("Status")])])]),_c('tbody',_vm._l((_vm.tasks),function(task,i){return _c('tr',{key:i},[_c('td',[_c('router-link',{attrs:{"to":{path: task.path, query: task.token}}},[_vm._v(_vm._s(task.name))])],1),_c('td',[_vm._v(_vm._s(task.status))])])}),0)])])}
 var staticRenderFns = []
 
@@ -1152,7 +968,12 @@ function normalizeComponent (
     options._ssrRegister = hook
   } else if (injectStyles) {
     hook = shadowMode
-      ? function () { injectStyles.call(this, this.$root.$options.shadowRoot) }
+      ? function () {
+        injectStyles.call(
+          this,
+          (options.functional ? this.parent : this).$root.$options.shadowRoot
+        )
+      }
       : injectStyles
   }
 
@@ -1161,7 +982,7 @@ function normalizeComponent (
       // for template-only hot-reload because in that case the render fn doesn't
       // go through the normalizer
       options._injectStyles = hook
-      // register for functioal component in vue file
+      // register for functional component in vue file
       var originalRender = options.render
       options.render = function renderWithStyleInjection (h, context) {
         hook.call(context)
@@ -1497,17 +1318,6 @@ module.exports = (
 
 /***/ }),
 
-/***/ "f751":
-/***/ (function(module, exports, __webpack_require__) {
-
-// 19.1.3.1 Object.assign(target, source)
-var $export = __webpack_require__("5ca1");
-
-$export($export.S + $export.F, 'Object', { assign: __webpack_require__("7333") });
-
-
-/***/ }),
-
 /***/ "f97e":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1521,13 +1331,12 @@ function webpackContext(req) {
 	return __webpack_require__(id);
 }
 function webpackContextResolve(req) {
-	var id = map[req];
-	if(!(id + 1)) { // check for number or string
+	if(!__webpack_require__.o(map, req)) {
 		var e = new Error("Cannot find module '" + req + "'");
 		e.code = 'MODULE_NOT_FOUND';
 		throw e;
 	}
-	return id;
+	return map[req];
 }
 webpackContext.keys = function webpackContextKeys() {
 	return Object.keys(map);
@@ -1559,6 +1368,7 @@ module.exports = document && document.documentElement;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+// ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
 
 // CONCATENATED MODULE: ./node_modules/@vue/cli-service/lib/commands/build/setPublicPath.js
@@ -1591,7 +1401,7 @@ var workflow = __webpack_require__("05f0");
 
 
 
-window.workflowMixin = workflow["a" /* default */];
+window.WorkflowMixin = workflow["a" /* default */];
 window.addEventListener('load', function () {
   // Register ../routes/* as routes
   var files = __webpack_require__("f97e");

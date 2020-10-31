@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\Facade;
  * @author David Callizaya <davidcallizaya@gmail.com>
  * @see \JDD\Workflow\Bpmn\Manager
  *
- * @method \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface cancelProcess(string $instanceId)
- * @method \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface startProcess(string $processURL, string $eventId, array $data)
- * @method \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface callProcess(string $processURL, array $data)
- * @method \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface completeTask(string $instanceId, string $tokenId, array $data)
- * @method array getProcessPaths()
- * @method string getProcessSvg(string $processName)
+ * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface cancelProcess(string $instanceId)
+ * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface startProcess(string $processURL, string $eventId, array $data)
+ * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface callProcess(string $processURL, array $data)
+ * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface completeTask(string $instanceId, string $tokenId, array $data)
+ * @method static array getProcessPaths()
+ * @method static string getProcessSvg(string $processName)
  */
 class Workflow extends Facade
 {

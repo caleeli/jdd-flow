@@ -78,7 +78,9 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
                 'id' => $token->getId(),
                 'element' => $element->getId(),
                 'name' => $element->getName(),
+                'type' => $element->getBpmnElement()->localName,
                 'implementation' => $element->getProperty('implementation'),
+                'user_id' => $token->getProperty('user_id'),
                 'status' => $token->getStatus(),
                 'index' => $token->getIndex(),
             ];

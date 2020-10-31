@@ -2,13 +2,22 @@
 
 namespace JDD\Workflow\Bpmn;
 
+use JDD\Workflow\Bpmn\Contracts\HumanPerformerInterface;
+use JDD\Workflow\Bpmn\Contracts\PotentialOwnerInterface;
+use JDD\Workflow\Bpmn\Contracts\ResourceAssignmentExpressionInterface;
+use JDD\Workflow\Bpmn\Contracts\ResourceRoleInterface;
+use JDD\Workflow\Events\NewProcessEvent;
+use JDD\Workflow\Jobs\ScriptTaskJob;
 use JDD\Workflow\Models\Process;
+use ProcessMaker\Nayra\Bpmn\Collection;
+use ProcessMaker\Nayra\Bpmn\Events\ActivityActivatedEvent;
+use ProcessMaker\Nayra\Bpmn\Events\ProcessInstanceCreatedEvent;
+use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface;
+use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
-use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
-use JDD\Workflow\Jobs\ScriptTaskJob;
 use ProcessMaker\Nayra\Storage\BpmnElement;
 
 class Manager
@@ -75,7 +84,7 @@ class Manager
         $this->repository = new Repository;
         $this->dispatcher = app('events');
         $this->engine = new TestEngine($this->repository, $this->dispatcher);
-        $this->listenSaveEvents();
+        $this->listenBpmnEvents();
     }
 
     private function prepare()
@@ -86,10 +95,45 @@ class Manager
         $this->bpmnRepository->setEngine($this->engine);
         $this->bpmnRepository->setFactory($this->repository);
         $mapping = $this->bpmnRepository->getBpmnElementsMapping();
+        // Add relationship UserTask-Performer
+        $mapping[BpmnDocument::BPMN_MODEL]['userTask'][1]['resources'] = ['n', ResourceRoleInterface::class];
         $this->bpmnRepository->setBpmnElementMapping(
             BpmnDocument::BPMN_MODEL,
             'userTask',
-            $mapping[BpmnDocument::BPMN_MODEL]['task']
+            $mapping[BpmnDocument::BPMN_MODEL]['userTask'],
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'potentialOwner',
+            [
+                PotentialOwnerInterface::class,
+                [],
+            ],
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'resourceAssignmentExpression',
+            [
+                ResourceAssignmentExpressionInterface::class,
+                [
+                    ResourceAssignmentExpressionInterface::BPMN_PROPERTY_FORMAL_EXPRESSION => ['1', [BpmnDocument::BPMN_MODEL, 'formalExpression']],
+                ],
+            ],
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'humanPerformer',
+            [
+                HumanPerformerInterface::class,
+                [
+                    HumanPerformerInterface::BPMN_PROPERTY_RESOURCE_ASSIGNMENT_EXPRESSION => ['1', [BpmnDocument::BPMN_MODEL, 'resourceAssignmentExpression']],
+                ],
+            ],
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'formalExpression',
+            $mapping[BpmnDocument::BPMN_MODEL]['conditionExpression']
         );
         $this->bpmnRepository->setBpmnElementMapping(
             BpmnDocument::BPMN_MODEL,
@@ -104,11 +148,6 @@ class Manager
         $this->bpmnRepository->setBpmnElementMapping(
             BpmnDocument::BPMN_MODEL,
             'documentation',
-            BpmnDocument::SKIP_ELEMENT
-        );
-        $this->bpmnRepository->setBpmnElementMapping(
-            BpmnDocument::BPMN_MODEL,
-            'humanPerformer',
             BpmnDocument::SKIP_ELEMENT
         );
         $this->engine->setRepository($this->repository);
@@ -351,7 +390,7 @@ class Manager
                 'id' => $instanceId,
                 'processId' => $processData->process_id,
                 'data' => json_decode(json_encode($processData->data), true),
-                'tokens' => $processData->tokens,
+                'tokens' => $processData->tokens->toArray(),
             ]
         ]);
         return $processData;
@@ -361,7 +400,7 @@ class Manager
      * Listen for Workflow events
      *
      */
-    private function listenSaveEvents()
+    private function listenBpmnEvents()
     {
         $this->dispatcher->listen(
             ScriptTaskInterface::EVENT_SCRIPT_TASK_ACTIVATED,
@@ -370,6 +409,36 @@ class Manager
                 ScriptTaskJob::dispatch($token);
             }
         );
+        $this->dispatcher->listen(
+            ActivityInterface::EVENT_ACTIVITY_ACTIVATED,
+            function (ActivityActivatedEvent $event) {
+                $resources = $event->activity->getProperty('resources');
+                $this->assignResource($event->token, $resources, $event->activity);
+                $this->saveProcessInstance($event->token->getInstance());
+            }
+        );
+        $this->dispatcher->listen(
+            ProcessInterface::EVENT_PROCESS_INSTANCE_CREATED,
+            function (ProcessInstanceCreatedEvent $event) {
+                event(new NewProcessEvent($event->instance));
+            }
+        );
+    }
+
+    /**
+     * Assign resource to activity
+     *
+     * @param TokenInterface $token
+     * @param ResourceRoleInterface[] $resources
+     * @param ActivityInterface $activity
+     *
+     * @return void
+     */
+    private function assignResource(TokenInterface $token, Collection $resources, ActivityInterface $activity)
+    {
+        foreach ($resources as $resource) {
+            $resource->execute($token, $activity);
+        }
     }
 
     /**

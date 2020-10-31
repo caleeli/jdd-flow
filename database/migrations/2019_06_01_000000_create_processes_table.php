@@ -18,8 +18,7 @@ class CreateProcessesTable extends Migration
             $table->string('process_id');
             $table->string('bpmn');
             $table->json('data');
-            $table->json('tokens');
-            $table->enum('status', ['ACTIVE', 'COMPLETED']);
+            $table->string('status');
             $table->timestamps();
         });
     }

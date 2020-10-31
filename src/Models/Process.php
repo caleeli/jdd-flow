@@ -56,17 +56,17 @@ class Process extends Model
     protected $attributes = [
         'bpmn' => '',
         'data' => '{}',
-        'tokens' => '{}',
+        //'tokens' => '{}',
         'status' => 'ACTIVE',
     ];
     protected $fillable = [
         'bpmn',
         'data',
-        'tokens',
+        //'tokens',
         'status',
     ];
     protected $casts = [
-        'tokens' => 'array',
+        //'tokens' => 'array',
     ];
 
     /**
@@ -100,9 +100,9 @@ class Process extends Model
      *
      * @return array
      */
-    public function call($processUrl, array $data)
+    public function call($process, array $data)
     {
-        $instance = Workflow::callProcess($processUrl, $data);
+        $instance = Workflow::callProcess($process, $data);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
@@ -116,9 +116,9 @@ class Process extends Model
      *
      * @return array
      */
-    public function start($processUrl, $start, array $data)
+    public function start($process, $start, array $data)
     {
-        $instance = Workflow::startProcess($processUrl, $start, $data);
+        $instance = Workflow::startProcess($process, $start, $data);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
@@ -132,9 +132,9 @@ class Process extends Model
      *
      * @return array
      */
-    public function completeTask($token, array $data)
+    public function complete($tokenId, array $data)
     {
-        $instance = Workflow::completeTask($this->id, $token, $data);
+        $instance = Workflow::completeTask($this->id, $tokenId, $data);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
@@ -179,5 +179,39 @@ class Process extends Model
             }
         }
         return $tasks;
+    }
+
+    public function tokens()
+    {
+        return $this->hasMany(ProcessToken::class);
+    }
+
+    public function setTokensAttribute(array $tokens)
+    {
+        if ($this->exists) {
+            $current = $this->tokens()->get();
+            $ids = [];
+            foreach($tokens as $token) {
+                if (!$token['status']) {
+                    continue;
+                }
+                $ids[] = $token['id'];
+                $t = $current->find($token['id']);
+                if (!$t) {
+                    $t = $this->tokens()->make();
+                }
+                foreach($token as $k => $v) {
+                    $t->$k = $v;
+                }
+                $t->save();
+            }
+            if ($ids) {
+                $this->tokens()->whereNotIn('id', $ids)->update(['status' => 'CLOSED']);
+            }
+        } else {
+            static::created(function ($issue) use ($tokens) {
+                $issue->tokens = $tokens;
+            });
+        }
     }
 }
