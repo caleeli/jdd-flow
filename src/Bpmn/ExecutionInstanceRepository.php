@@ -2,11 +2,15 @@
 
 namespace JDD\Workflow\Bpmn;
 
+use Blade;
+use Exception;
 use JDD\Workflow\Models\Process;
+use ProcessMaker\Nayra\Contracts\Bpmn\EntityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ParticipantInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Contracts\Repositories\ExecutionInstanceRepositoryInterface;
 use ProcessMaker\Nayra\Contracts\Repositories\StorageInterface;
+use ProcessMaker\Nayra\Storage\BpmnDocument;
 
 /**
  * Execution Instance Repository.
@@ -71,13 +75,15 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         }
         $dataStore = $instance->getDataStore();
         $tokens = $instance->getTokens();
+        $data = $instance->getDataStore()->getData();
         $mtokens = [];
         foreach ($tokens as $token) {
             $element = $token->getOwnerElement();
+            $name = $this->parseDocumentation($element, '@name', $data) ?: $element->getName();
             $mtokens[] = [
                 'id' => $token->getId(),
                 'element' => $element->getId(),
-                'name' => $element->getName(),
+                'name' => $name,
                 'type' => $element->getBpmnElement()->localName,
                 'implementation' => $element->getProperty('implementation'),
                 'user_id' => $token->getProperty('user_id'),
@@ -88,6 +94,50 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $processData->tokens = $mtokens;
         $processData->data = $dataStore->getData();
         $processData->save();
+    }
+
+    /**
+     * Parse documentation node to get a tag content
+     *
+     * @param EntityInterface $element
+     * @param string $tag
+     * @param array $data
+     *
+     * @return string
+     */
+    private function parseDocumentation(EntityInterface $element, $tag, array $data = [])
+    {
+        $documentation = $element->getBpmnElement()
+            ->getElementsByTagNameNS(BpmnDocument::BPMN_MODEL, 'documentation');
+        foreach ($documentation as $doc) {
+            if (strpos($doc->textContent, "$tag:") === 0) {
+                $text = trim(substr($doc->textContent, strlen($tag) + 1));
+                return $this->bladeText($text, $data);
+            }
+        }
+        return '';
+    }
+
+    /**
+     * Blade $text with $data
+     *
+     * @param string $text
+     * @param array $data
+     *
+     * @return string
+     */
+    private function bladeText($text, array $data = [])
+    {
+        $generated = Blade::compileString($text);
+        ob_start() and extract($data, EXTR_SKIP);
+        try {
+            eval('?>'.$generated);
+        } catch (Exception $e) {
+            ob_get_clean();
+            return '';
+        }
+        $content = ob_get_clean();
+        return $content;
     }
 
     /**

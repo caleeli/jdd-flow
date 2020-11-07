@@ -162,7 +162,7 @@ class Manager
      *
      * @return ExecutionInstanceInterface
      */
-    public function callProcess($processURL, $data = [])
+    public function callProcess($processURL, $data = [], $processId)
     {
         $this->prepare();
         //Process
@@ -248,13 +248,42 @@ class Manager
         }
 
         // Complete task
-        foreach ($instance->getTokens() as $token) {
-            if ($token->getId() === $tokenId) {
-                $task = $this->bpmnRepository->getActivity($token->getProperty('element'));
-                $task->complete($token);
-                break;
-            }
+        $token = $instance->getTokens()->findFirst(function ($token) use ($tokenId) {
+            return $token->getId() === $tokenId;
+        });
+        $task = $this->bpmnRepository->getActivity($token->getProperty('element'));
+        $task->complete($token);
+
+        $this->engine->runToNextState();
+        $this->saveState();
+
+        //Return the instance id
+        return $instance;
+    }
+
+    /**
+     * Update data from a task
+     *
+     * @param string $instanceId
+     * @param string $tokenId
+     * @param array $data
+     *
+     * @return ExecutionInstanceInterface
+     */
+    public function updateData($instanceId, $tokenId, $data = [])
+    {
+        $this->prepare();
+        // Load the execution data
+        $this->loadData($this->bpmnRepository, $instanceId);
+
+        // Process and instance
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
+
+        // Update data
+        foreach ($data as $key => $value) {
+            $instance->getDataStore()->putData($key, $value);
         }
+
         $this->engine->runToNextState();
         $this->saveState();
 
@@ -322,17 +351,21 @@ class Manager
     /**
      * Carga un proceso BPMN
      *
-     * @param string $processName
+     * @param string $bpmn
      *
      * @return ProcessInterface
      */
-    private function loadProcess($processName)
+    private function loadProcess($bpmn, $processId = null)
     {
         foreach ($this->getProcessPaths() as $name => $filename) {
-            if ($processName === $name) {
-                $this->bpmn = $processName;
+            if ($bpmn === $name) {
+                $this->bpmn = $bpmn;
                 $this->bpmnRepository->load($filename);
-                $process = $this->bpmnRepository->getElementsByTagName('process')->item(0)->getBpmnElementInstance();
+                if (!$processId) {
+                    $process = $this->bpmnRepository->getElementsByTagName('process')->item(0)->getBpmnElementInstance();
+                } else {
+                    $process = $this->bpmnRepository->findElementById($processId)->getBpmnElementInstance();
+                }
                 return $process;
             }
         }

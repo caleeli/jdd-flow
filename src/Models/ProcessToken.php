@@ -3,6 +3,7 @@
 namespace JDD\Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use JDD\Workflow\Facades\Workflow;
 
 /**
  * Process model
@@ -78,5 +79,35 @@ class ProcessToken extends Model
                 });
             }
         });
+    }
+
+    /**
+     * Complete a task of the process instance
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    public function complete(array $data = [])
+    {
+        Workflow::completeTask($this->process_id, $this->id, $data);
+        return [
+            'id' => $this->getKey()
+        ];
+    }
+
+    /**
+     * Update data from a token
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    public function updateData(array $data = [])
+    {
+        Workflow::updateData($this->process_id, $this->id, $data);
+        return [
+            'id' => $this->getKey()
+        ];
     }
 }

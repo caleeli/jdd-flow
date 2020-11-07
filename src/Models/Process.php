@@ -100,9 +100,9 @@ class Process extends Model
      *
      * @return array
      */
-    public function call($process, array $data)
+    public function call($bpmn, array $data, $processId)
     {
-        $instance = Workflow::callProcess($process, $data);
+        $instance = Workflow::callProcess($bpmn, $data, $processId);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
@@ -119,22 +119,6 @@ class Process extends Model
     public function start($process, $start, array $data)
     {
         $instance = Workflow::startProcess($process, $start, $data);
-        return [
-            'id' => $instance->getId(),
-            'attributes' => $instance->getProperties(),
-        ];
-    }
-
-    /**
-     * Complete a task of the process instance
-     *
-     * @param array $data
-     *
-     * @return array
-     */
-    public function complete($tokenId, array $data)
-    {
-        $instance = Workflow::completeTask($this->id, $tokenId, $data);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
