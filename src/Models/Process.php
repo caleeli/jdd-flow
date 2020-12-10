@@ -2,6 +2,7 @@
 
 namespace JDD\Workflow\Models;
 
+use Auth;
 use Illuminate\Database\Eloquent\Model;
 use JDD\Workflow\Facades\Workflow;
 
@@ -15,7 +16,7 @@ use JDD\Workflow\Facades\Workflow;
  *      @OA\Property(
  *          property="attributes",
  *          type="object",
- *          @OA\Property(property="bpmn", type="string"),
+ *          @OA\Property(property="definitions", type="string"),
  *          @OA\Property(property="data", type="object"),
  *          @OA\Property(
  *              property="tokens",
@@ -53,20 +54,18 @@ use JDD\Workflow\Facades\Workflow;
  */
 class Process extends Model
 {
+    protected $table = 'process_instances';
     protected $attributes = [
-        'bpmn' => '',
+        'definitions' => '',
         'data' => '{}',
-        //'tokens' => '{}',
         'status' => 'ACTIVE',
     ];
     protected $fillable = [
-        'bpmn',
+        'definitions',
         'data',
-        //'tokens',
         'status',
     ];
     protected $casts = [
-        //'tokens' => 'array',
     ];
 
     /**
@@ -100,9 +99,9 @@ class Process extends Model
      *
      * @return array
      */
-    public function call($bpmn, array $data, $processId)
+    public function call($definitions, array $data, $processId)
     {
-        $instance = Workflow::callProcess($bpmn, $data, $processId);
+        $instance = Workflow::callProcess($definitions, $data, $processId);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
@@ -154,7 +153,7 @@ class Process extends Model
                 $tasks[] = [
                     'name' => $token['name'] ?? '',
                     'status' => $token['status'],
-                    'path' => $token['implementation'] ? substr($token['implementation'], 1) : null,
+                    'implementation' => $token['implementation'] ?? null,
                     'token' => [
                         'instance' => $this->id,
                         'token' => $token['id'],
@@ -167,7 +166,7 @@ class Process extends Model
 
     public function tokens()
     {
-        return $this->hasMany(ProcessToken::class);
+        return $this->hasMany(ProcessToken::class, 'instance_id');
     }
 
     public function setTokensAttribute(array $tokens)
@@ -175,7 +174,7 @@ class Process extends Model
         if ($this->exists) {
             $current = $this->tokens()->get();
             $ids = [];
-            foreach($tokens as $token) {
+            foreach ($tokens as $token) {
                 if (!$token['status']) {
                     continue;
                 }
@@ -184,9 +183,10 @@ class Process extends Model
                 if (!$t) {
                     $t = $this->tokens()->make();
                 }
-                foreach($token as $k => $v) {
+                foreach ($token as $k => $v) {
                     $t->$k = $v;
                 }
+                $t->definitions = $this->definitions;
                 $t->save();
             }
             if ($ids) {
@@ -197,5 +197,17 @@ class Process extends Model
                 $issue->tokens = $tokens;
             });
         }
+    }
+
+    /**
+     * Filter for user logged
+     *
+     * @param mixed $query
+     *
+     * @return mixed
+     */
+    public function scopeWhereUserLogged($query)
+    {
+        return $query->where('user_id', Auth::id());
     }
 }

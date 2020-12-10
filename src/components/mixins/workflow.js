@@ -1,14 +1,18 @@
 import Bpmn from '../classes/Bpmn';
 
 export default {
+  beforeCreate() {
+    this.bpmn = new Bpmn({
+      $owner: this,
+      // Events
+      NewProcess: null,
+      TaskAssigned: null,
+    });
+  },
   data() {
     return {
       socketListeners: [],
-      bpmn: new Bpmn({
-        $owner: this,
-        // Events
-        NewProcess: null,
-      }),
+      bpmn: this.bpmn,
     };
   },
   methods: {
@@ -22,10 +26,6 @@ export default {
         callback,
       );
     },
-    listenBpmn(callback, instance = this.$route.query.instance, token = this.$route.query.token) {
-      const channel = `Process.${instance}.Token.${token}`;
-      this.addSocketListener(channel, '.ElementConsole', callback);
-    },
     cleanSocketListeners() {
       // Stop registered socket listeners 
       this.socketListeners.forEach(element => {
@@ -37,7 +37,13 @@ export default {
   },
   mounted() {
     this.addSocketListener('Bpmn', '.NewProcess', (data) => {
-      this.bpmn.NewProcess = data;
+      this.bpmn.dispatch('NewProcess', data);
     });
+    const userId = (this.$root.user && this.$root.user.id) || (window.userId);
+    if (userId) {
+      this.addSocketListener(`User.${userId}`, '.TaskAssigned', (data) => {
+        this.bpmn.dispatch('TaskAssigned', data);
+      });
+    }
   },
 };

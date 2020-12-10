@@ -13,13 +13,15 @@ class CreateProcessesTable extends Migration
      */
     public function up()
     {
-        Schema::create('processes', function (Blueprint $table) {
+        Schema::create('process_instances', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('process_id');
-            $table->string('bpmn');
-            $table->json('data');
+            $table->bigInteger('user_id')->nullable();
+            $table->string('process');
+            $table->string('definitions');
             $table->string('status');
+            $table->json('data');
             $table->timestamps();
+            $table->index(['definitions', 'status']);
         });
     }
 
@@ -30,6 +32,6 @@ class CreateProcessesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('processes');
+        Schema::dropIfExists('process_instances');
     }
 }

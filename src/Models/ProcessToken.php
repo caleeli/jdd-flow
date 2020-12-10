@@ -2,7 +2,9 @@
 
 namespace JDD\Workflow\Models;
 
+use Auth;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use JDD\Workflow\Facades\Workflow;
 
 /**
@@ -55,16 +57,17 @@ class ProcessToken extends Model
 {
     protected $attributes = [
         'id' => '',
-        'process_id' => '',
+        'instance_id' => '',
         'element' => '',
         'status' => '',
         'name' => '',
         'implementation' => '',
         'index' => 0,
+        'log' => '',
     ];
     protected $fillable = [];
 
-    public function process()
+    public function instance()
     {
         return $this->belongsTo(Process::class);
     }
@@ -82,6 +85,18 @@ class ProcessToken extends Model
     }
 
     /**
+     * Filter for user logged
+     *
+     * @param mixed $query
+     *
+     * @return mixed
+     */
+    public function scopeWhereUserLogged($query)
+    {
+        return $query->where('user_id', Auth::id());
+    }
+
+    /**
      * Complete a task of the process instance
      *
      * @param array $data
@@ -90,7 +105,7 @@ class ProcessToken extends Model
      */
     public function complete(array $data = [])
     {
-        Workflow::completeTask($this->process_id, $this->id, $data);
+        Workflow::completeTask($this->instance_id, $this->id, $data);
         return [
             'id' => $this->getKey()
         ];
@@ -105,9 +120,36 @@ class ProcessToken extends Model
      */
     public function updateData(array $data = [])
     {
-        Workflow::updateData($this->process_id, $this->id, $data);
+        Workflow::updateData($this->instance_id, $this->id, $data);
         return [
             'id' => $this->getKey()
         ];
+    }
+
+    /**
+     * Get process instance data through process token
+     *
+     * @param array $variables
+     *
+     * @return object
+     */
+    public function getData($variables = ['*'], $default = [])
+    {
+        $default = (array) $default;
+        $data = [];
+        foreach ($variables as $variable) {
+            if ($variable === '*') {
+                return (object) $this->instance->data;
+            } else {
+                $data[$variable] = $this->instance->data->$variable ?? $default[$variable] ?? null;
+            }
+        }
+        return (object) $data;
+    }
+
+    public function scopeDoCount($query)
+    {
+        $query = $query->select([DB::raw('count(*) as count')]);
+        return $query;
     }
 }

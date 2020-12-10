@@ -4,45 +4,45 @@
     <div><button class="btn btn-primary" @click="callProcess('HelloWorld')">Call process</button></div>
     <div><button class="btn btn-primary" @click="startProcess('HelloWorld', 2)">Start process SE 2</button></div>
     <div v-for="task in tasks" :key="task.id">
-      {{task}}
+      {{ task }}
       <button class="btn btn-sm btn-secondary" @click="openTask(task)">open</button>
     </div>
   </div>
 </template>
 
 <script>
-import workflowMixin from "./mixins/workflow";
+import workflowMixin from './mixins/workflow';
 
 export default {
-  name: "HelloWorld",
+  name: 'HelloWorld',
   mixins: [workflowMixin],
   props: {
-    msg: String
+    msg: String,
   },
   data() {
     return {
-      tasks: []
+      tasks: [],
     };
   },
   methods: {
     loadTasks() {
       window.axios
-        .post("process", {
+        .post('process', {
           call: {
-            method: "tasks",
-            params: {}
-          }
+            method: 'tasks',
+            params: {},
+          },
         })
         .then(response => {
-          this.$set(this, "tasks", response.data.response);
+          this.$set(this, 'tasks', response.data.response);
         });
-    }
+    },
   },
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.loadTasks();
     });
-  }
+  },
 };
 </script>
 

@@ -7,7 +7,10 @@ use DatePeriod;
 use DateTime;
 use Exception;
 use ProcessMaker\Nayra\Bpmn\FormalExpressionTrait;
+use ProcessMaker\Nayra\Bpmn\Models\DataStore;
 use ProcessMaker\Nayra\Contracts\Bpmn\FormalExpressionInterface;
+use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
+use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 
 /**
  * FormalExpression implementation
@@ -55,9 +58,11 @@ class FormalExpression implements FormalExpressionInterface
      *
      * @return string
      */
-    public function __invoke($data)
+    public function __invoke($data, TokenInterface $token)
     {
-        extract($data);
+        extract((array) $data);
+        $data = (object) $data;
+        $instance = $token->getInstance();
         return $this->getDateExpression()
             ?: $this->getCycleExpression()
             ?: $this->getDurationExpression()

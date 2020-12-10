@@ -15,20 +15,23 @@ class CreateProcessTokensTable extends Migration
     {
         Schema::create('process_tokens', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('process_id');
+            $table->bigInteger('instance_id');
+            $table->bigInteger('user_id')->nullable();
+            $table->string('definitions');
             $table->string('element');
             $table->string('status');
             $table->string('type');
             $table->string('name')->nullable();
             $table->string('implementation')->nullable();
             $table->string('index')->nullable();
-            $table->bigInteger('user_id')->nullable();
+            $table->text('log')->nullable();
             $table->timestamps();
-            $table->foreign('process_id')
-                ->references('id')->on('processes')
+            $table->foreign('instance_id')
+                ->references('id')->on('process_instances')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
             $table->index(['element', 'status']);
+            $table->index(['definitions', 'element', 'status']);
         });
     }
 

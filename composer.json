@@ -21,7 +21,11 @@
         "laravel": {
             "providers": [
                 "JDD\\Workflow\\Providers\\PackageServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "ProcessInstance": "JDD\\Workflow\\Models\\Process",
+                "ProcessToken": "JDD\\Workflow\\Models\\ProcessToken"
+            }
         }
     },
     "scripts": {

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface callProcess(string $processURL, array $data, string $processId)
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface completeTask(string $instanceId, string $tokenId, array $data)
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface updateData(string $instanceId, string $tokenId, array $data)
+ * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface executeScript(string $instanceId, string $tokenId)
  * @method static array getProcessPaths()
  * @method static string getProcessSvg(string $processName)
  */

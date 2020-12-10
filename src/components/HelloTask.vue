@@ -1,7 +1,7 @@
 <template>
   <div class="hello">
     <h2>Hello Task</h2>
-    <div><small>{{workflowToken}}</small></div>
+    <div><small>{{ workflowToken }}</small></div>
     <div><button class="btn btn-primary" @click="completeTask()">Complete Task</button></div>
     <div><button class="btn btn-primary" @click="cancelProcess()">Cancel process</button></div>
   </div>
@@ -14,9 +14,9 @@ export default {
   name: 'HelloTask',
   mixins: [workflowMixin],
   props: {
-    msg: String
-  }
-}
+    msg: String,
+  },
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

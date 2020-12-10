@@ -22,7 +22,6 @@ class ProcessUpdated implements ShouldBroadcastNow
      */
     public function __construct(Process $process)
     {
-        \Log::info('new ProcessUpdated ' . $process->getKey());
         $this->process = $process;
     }
 

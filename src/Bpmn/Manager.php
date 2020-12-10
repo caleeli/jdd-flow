@@ -104,14 +104,6 @@ class Manager
         );
         $this->bpmnRepository->setBpmnElementMapping(
             BpmnDocument::BPMN_MODEL,
-            'potentialOwner',
-            [
-                PotentialOwnerInterface::class,
-                [],
-            ],
-        );
-        $this->bpmnRepository->setBpmnElementMapping(
-            BpmnDocument::BPMN_MODEL,
             'resourceAssignmentExpression',
             [
                 ResourceAssignmentExpressionInterface::class,
@@ -127,6 +119,16 @@ class Manager
                 HumanPerformerInterface::class,
                 [
                     HumanPerformerInterface::BPMN_PROPERTY_RESOURCE_ASSIGNMENT_EXPRESSION => ['1', [BpmnDocument::BPMN_MODEL, 'resourceAssignmentExpression']],
+                ],
+            ],
+        );
+        $this->bpmnRepository->setBpmnElementMapping(
+            BpmnDocument::BPMN_MODEL,
+            'potentialOwner',
+            [
+                PotentialOwnerInterface::class,
+                [
+                    PotentialOwnerInterface::BPMN_PROPERTY_RESOURCE_ASSIGNMENT_EXPRESSION => ['1', [BpmnDocument::BPMN_MODEL, 'resourceAssignmentExpression']],
                 ],
             ],
         );
@@ -166,8 +168,10 @@ class Manager
     {
         $this->prepare();
         //Process
-        $process = $this->loadProcess($processURL);
-        $instance = $process->call();
+        $process = $this->loadProcess($processURL, $processId);
+        $dataStore = $this->repository->createDataStore();
+        $dataStore->setData($data);
+        $instance = $process->call($dataStore);
         $this->engine->runToNextState();
         $this->saveState();
         return $instance;
@@ -190,7 +194,7 @@ class Manager
 
         //Create a new data store
         $dataStorage = $process->getRepository()->createDataStore();
-        $dataStorage->setData($data);
+        $dataStorage->setData((object) $data);
         $instance = $process->getEngine()->createExecutionInstance(
             $process,
             $dataStorage
@@ -417,11 +421,11 @@ class Manager
     private function loadData(BpmnDocument $repository, $instanceId)
     {
         $processData = Process::findOrFail($instanceId);
-        $this->loadProcess($processData->bpmn);
+        $this->loadProcess($processData->definitions);
         $this->instanceRepository->setRawData([
             $instanceId => [
                 'id' => $instanceId,
-                'processId' => $processData->process_id,
+                'processId' => $processData->process,
                 'data' => json_decode(json_encode($processData->data), true),
                 'tokens' => $processData->tokens->toArray(),
             ]
@@ -462,13 +466,16 @@ class Manager
      * Assign resource to activity
      *
      * @param TokenInterface $token
-     * @param ResourceRoleInterface[] $resources
+     * @param ResourceRoleInterface[]|null $resources
      * @param ActivityInterface $activity
      *
      * @return void
      */
-    private function assignResource(TokenInterface $token, Collection $resources, ActivityInterface $activity)
+    private function assignResource(TokenInterface $token, Collection $resources = null, ActivityInterface $activity)
     {
+        if (!$resources) {
+            return;
+        }
         foreach ($resources as $resource) {
             $resource->execute($token, $activity);
         }
@@ -509,6 +516,7 @@ class Manager
      * @param TokenInterface $token
      * @param ExecutionInstanceInterface $instance
      *
+     * @deprecated
      * @return array
      */
     private function accessLink(TokenInterface $token, ExecutionInstanceInterface $instance)

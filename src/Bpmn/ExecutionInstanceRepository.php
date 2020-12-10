@@ -2,6 +2,7 @@
 
 namespace JDD\Workflow\Bpmn;
 
+use Auth;
 use Blade;
 use Exception;
 use JDD\Workflow\Models\Process;
@@ -70,8 +71,9 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $processData = Process::findOrNew($id);
         if (!$processData->exists) {
             $processData->id = $id;
-            $processData->process_id = $instance->getProcess()->getId();
-            $processData->bpmn = $bpmn;
+            $processData->process = $instance->getProcess()->getId();
+            $processData->definitions = $bpmn;
+            $processData->user_id = Auth::id();
         }
         $dataStore = $instance->getDataStore();
         $tokens = $instance->getTokens();
@@ -85,10 +87,11 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
                 'element' => $element->getId(),
                 'name' => $name,
                 'type' => $element->getBpmnElement()->localName,
-                'implementation' => $element->getProperty('implementation'),
+                'implementation' => $token->getImplementation(),
                 'user_id' => $token->getProperty('user_id'),
                 'status' => $token->getStatus(),
                 'index' => $token->getIndex(),
+                'log' => $token->getProperty('log'),
             ];
         }
         $processData->tokens = $mtokens;

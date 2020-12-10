@@ -10,6 +10,7 @@ use JDD\Workflow\Bpmn\ScriptFormats\BashScript;
 use JDD\Workflow\Bpmn\ScriptFormats\PhpScript;
 use JDD\Workflow\Events\ElementConsole;
 use JDD\Workflow\Models\Process as Model;
+use JDD\Workflow\Models\Process;
 use ProcessMaker\Nayra\Bpmn\Models\ScriptTask as ScriptTaskBase;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
@@ -65,11 +66,12 @@ class ScriptTask extends ScriptTaskBase
         }, 1);
         try {
             Storage::disk('public')->delete($logfile);
-            $this->runCode($this->model, $script, $format);
+            $this->runCode($this->model, $script, $format, $token);
         } catch (Exception $e) {
             Log::error($e->getMessage());
             $result = false;
             $this->printOutput($e->getMessage(), $token, $logfile);
+            $token->setProperty('log', $e->getMessage() . "\n" . $e->getTraceAsString());
         }
         ob_end_clean();
         return $result;
@@ -83,9 +85,9 @@ class ScriptTask extends ScriptTaskBase
      *
      * @return mixed
      */
-    private function runCode($model, $script, $format)
+    private function runCode(Process $model, $script, $format, Token $token)
     {
-        return $this->scriptFactory($format)->run($this, $model, $script);
+        return $this->scriptFactory($format)->run($this, $model, $script, $token);
     }
 
     /**

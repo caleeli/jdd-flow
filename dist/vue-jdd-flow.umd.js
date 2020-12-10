@@ -218,31 +218,47 @@ function _createClass(Constructor, protoProps, staticProps) {
 
 
 
+
 var Bpmn_Bpmn = /*#__PURE__*/function () {
   function Bpmn(props) {
     _classCallCheck(this, Bpmn);
 
     Object.assign(this, props);
+    this.observers = [];
   }
 
   _createClass(Bpmn, [{
-    key: "call",
-
+    key: "wrap",
+    value: function wrap(object) {
+      var bpmn = this;
+      return Object.assign(object, {
+        thenRoute: function thenRoute(element) {
+          bpmn.listenOnce('TaskAssigned', function (token) {
+            if (!element || element === token.element) {
+              bpmn.routeTo(token);
+            }
+          });
+        }
+      });
+    }
     /**
      * Call a process from a BPMN process definition
      *
-     * @param {*} bpmn Bpmn file
+     * @param {*} definitions Bpmn file that contains the definitions
      * @param {*} data Initial data
      * @param {*} processId Process ID
      */
-    value: function call(bpmn) {
+
+  }, {
+    key: "call",
+    value: function call(definitions) {
       var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      return this.$api.process.call('call', {
-        bpmn: bpmn,
+      return this.wrap(this.$api.process.call('call', {
+        definitions: definitions,
         data: data,
         processId: processId
-      });
+      }));
     }
     /**
      * Complete an active token
@@ -255,9 +271,9 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
     key: "complete",
     value: function complete(data) {
       var tokenId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.tokenId;
-      return this.$api.process_token[tokenId].call('complete', {
+      return this.wrap(this.$api.process_token[tokenId].call('complete', {
         data: data
-      });
+      }));
     }
     /**
      * Update data from a token
@@ -274,6 +290,12 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
         data: data
       });
     }
+    /**
+     * Get the implementation route of a token
+     *
+     * @param {*} token 
+     */
+
   }, {
     key: "route",
     value: function route(token) {
@@ -284,6 +306,36 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
           tokenId: token.id
         }
       };
+    }
+    /**
+     * Route to implementation of a token
+     *
+     * @param {*} token 
+     */
+
+  }, {
+    key: "routeTo",
+    value: function routeTo(token) {
+      this.$router.push(this.route(token));
+    }
+    /**
+     * Get data available for tokenId
+     *
+     * @param array variables 
+     * @param object defaultData
+     * @param int tokenId 
+     */
+
+  }, {
+    key: "data",
+    value: function data() {
+      var variables = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ['*'];
+      var defaultData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var tokenId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.tokenId;
+      return this.$api.process_token[tokenId].rowCall('getData', {
+        variables: variables,
+        default: defaultData
+      }, defaultData);
     }
     /**
      * Get the result of a call process
@@ -313,9 +365,45 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
   }, {
     key: "rowComplete",
     value: function rowComplete(token, data) {
-      return this.$api.process[token.attributes.process_id].rowCall('complete', {
+      return this.$api.process[token.attributes.instance_id].rowCall('complete', {
         tokenId: token.id,
         data: data
+      });
+    }
+    /**
+     * Dispatch an bpmn event
+     *
+     * @param {*} event 
+     * @param {*} data 
+     */
+
+  }, {
+    key: "dispatch",
+    value: function dispatch(event, data) {
+      this[event] = data;
+      this.observers.forEach(function (observer) {
+        if (observer.event === event) {
+          observer.callback(data);
+        }
+      });
+      this.observers = this.observers.filter(function (observer) {
+        return !observer.once || observer.event !== event;
+      });
+    }
+    /**
+     * Add a listener that is triggered once
+     *
+     * @param {*} event 
+     * @param {*} callback 
+     */
+
+  }, {
+    key: "listenOnce",
+    value: function listenOnce(event, callback) {
+      this.observers.push({
+        event: event,
+        callback: callback,
+        once: true
       });
     }
   }, {
@@ -328,6 +416,11 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
     get: function get() {
       return this.$owner.$route;
     }
+  }, {
+    key: "$router",
+    get: function get() {
+      return this.$owner.$router;
+    }
   }]);
 
   return Bpmn;
@@ -338,14 +431,18 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
 
 
 /* harmony default export */ var workflow = __webpack_exports__["a"] = ({
+  beforeCreate: function beforeCreate() {
+    this.bpmn = new classes_Bpmn({
+      $owner: this,
+      // Events
+      NewProcess: null,
+      TaskAssigned: null
+    });
+  },
   data: function data() {
     return {
       socketListeners: [],
-      bpmn: new classes_Bpmn({
-        $owner: this,
-        // Events
-        NewProcess: null
-      })
+      bpmn: this.bpmn
     };
   },
   methods: {
@@ -355,12 +452,6 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
         event: event
       });
       window.Echo.private(channel).listen(event, callback);
-    },
-    listenBpmn: function listenBpmn(callback) {
-      var instance = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.instance;
-      var token = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.token;
-      var channel = "Process.".concat(instance, ".Token.").concat(token);
-      this.addSocketListener(channel, '.ElementConsole', callback);
     },
     cleanSocketListeners: function cleanSocketListeners() {
       // Stop registered socket listeners 
@@ -373,8 +464,15 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
     var _this = this;
 
     this.addSocketListener('Bpmn', '.NewProcess', function (data) {
-      _this.bpmn.NewProcess = data;
+      _this.bpmn.dispatch('NewProcess', data);
     });
+    var userId = this.$root.user && this.$root.user.id || window.userId;
+
+    if (userId) {
+      this.addSocketListener("User.".concat(userId), '.TaskAssigned', function (data) {
+        _this.bpmn.dispatch('TaskAssigned', data);
+      });
+    }
   }
 });
 

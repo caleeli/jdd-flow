@@ -5,6 +5,7 @@ namespace JDD\Workflow\Bpmn\ScriptFormats;
 use JDD\Workflow\Bpmn\ScriptTask;
 use Blade;
 use Illuminate\View\Compilers\BladeCompiler;
+use JDD\Workflow\Bpmn\Token;
 
 class BashScript extends BaseScriptExecutor
 {
@@ -16,7 +17,7 @@ class BashScript extends BaseScriptExecutor
      *
      * @return mixed
      */
-    public function run(ScriptTask $scriptTask, $model, $script)
+    public function run(ScriptTask $scriptTask, $model, $script, Token $token)
     {
         $compiler = new BladeCompiler(app('files'), config('view.compiled'));
         $compiler->setEchoFormat('escapeshellarg(%s)');
@@ -29,7 +30,7 @@ class BashScript extends BaseScriptExecutor
             throw $e;
         }
         $preparedScript = ob_get_clean();
-        parent::run($scriptTask, $model, $preparedScript);
+        parent::run($scriptTask, $model, $preparedScript, $token);
     }
 
     /**
@@ -40,7 +41,7 @@ class BashScript extends BaseScriptExecutor
      *
      * @return mixed
      */
-    public function runFile(ScriptTask $scriptTask, $model)
+    public function runFile(ScriptTask $scriptTask, $model, Token $token)
     {
         return passthru('bash ' . escapeshellarg($this->filename) . ' 2>&1');
     }

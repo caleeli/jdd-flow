@@ -23,11 +23,12 @@ class HumanPerformer implements HumanPerformerInterface
     {
         $expression = $this->getResourceAssignmentExpression()->getFormalExpression();
         $data = $token->getInstance()->getDataStore()->getData();
-        $ids = $expression($data);
+        $ids = $expression($data, $token);
+        //$token->getInstance()->getDataStore()->setData((array) $data);
         if (is_array($ids)) {
-            $token->setProperty('user_id', $ids[0]);
+            $token->setUserId($ids[0]);
         } else {
-            $token->setProperty('user_id', $ids);
+            $token->setUserId($ids);
         }
     }
 }
