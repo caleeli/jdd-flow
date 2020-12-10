@@ -34,7 +34,7 @@ class Bpmn
    * @param {*} processId Process ID
    */
   call(definitions, data = {}, processId = null) {
-    return this.wrap(this.$api.process.call('call', { definitions, data, processId }));
+    return this.wrap(this.$api.process_instance.call('call', { definitions, data, processId }));
   }
   /**
    * Complete an active token
@@ -93,7 +93,7 @@ class Bpmn
    * @param {*} data 
    */
   rowCall(bpmn, data = {}, processId = null) {
-    return this.$api.process.rowCall('call', { bpmn, data, processId });
+    return this.$api.process_instance.rowCall('call', { bpmn, data, processId });
   }
   /**
    * Get the result of a complete active token
@@ -102,7 +102,7 @@ class Bpmn
    * @param {*} data 
    */
   rowComplete(token, data) {
-    return this.$api.process[token.attributes.instance_id]
+    return this.$api.process_instance[token.attributes.instance_id]
       .rowCall('complete', { tokenId: token.id, data });
   }
   /**

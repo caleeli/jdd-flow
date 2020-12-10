@@ -6,12 +6,12 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use JDD\Workflow\Bpmn\ExecutionInstance;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 
 class NewProcessEvent implements ShouldBroadcastNow
 {
 
-    /** @var Process */
+    /** @var ProcessInstance */
     public $instance_id;
     public $attributes = [];
 

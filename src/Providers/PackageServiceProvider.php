@@ -8,7 +8,8 @@ use Illuminate\Support\ServiceProvider;
 use JDD\Workflow\Bpmn\Manager;
 use JDD\Workflow\Console\Commands\UpdatePackage;
 use JDD\Workflow\Facades\Workflow;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
+use JDD\Workflow\Models\ProcessToken;
 use JDD\Workflow\Observers\ProcessObserver;
 use ProcessMaker\Nayra\Storage\BpmnDocument;
 
@@ -22,7 +23,6 @@ class PackageServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // Nothing is registered at this time
     }
 
     /**
@@ -35,6 +35,7 @@ class PackageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->app->alias('ProcessToken', ProcessToken::class);
         // Register artisan commands
         $this->commands([UpdatePackage::class]);
         // Register routes
@@ -46,7 +47,7 @@ class PackageServiceProvider extends ServiceProvider
                 return new Manager;
             }
         );
-        Process::observe(ProcessObserver::class);
+        ProcessInstance::observe(ProcessObserver::class);
         // Publish assets
         $this->publishes([
             __DIR__ . '/../../dist' => public_path('modules/' . self::PluginName),

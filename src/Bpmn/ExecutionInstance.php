@@ -2,7 +2,7 @@
 
 namespace JDD\Workflow\Bpmn;
 
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 use ProcessMaker\Nayra\Engine\ExecutionInstanceTrait;
 
@@ -16,7 +16,7 @@ class ExecutionInstance implements ExecutionInstanceInterface
     use ExecutionInstanceTrait;
 
     /**
-     * @var Process
+     * @var ProcessInstance
      */
     private $_model;
 
@@ -32,11 +32,11 @@ class ExecutionInstance implements ExecutionInstanceInterface
     /**
      * Get process model of this instance
      *
-     * @return Process
+     * @return ProcessInstance
      */
     public function getModel()
     {
-        $this->_model = $this->_model ?: Process::find($this->getId());
+        $this->_model = $this->_model ?: ProcessInstance::find($this->getId());
         return $this->_model;
     }
 }

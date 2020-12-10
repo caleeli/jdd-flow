@@ -9,8 +9,8 @@ use JDD\Workflow\Bpmn\ScriptFormats\BaseScriptExecutor;
 use JDD\Workflow\Bpmn\ScriptFormats\BashScript;
 use JDD\Workflow\Bpmn\ScriptFormats\PhpScript;
 use JDD\Workflow\Events\ElementConsole;
-use JDD\Workflow\Models\Process as Model;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance as Model;
+use JDD\Workflow\Models\ProcessInstance;
 use ProcessMaker\Nayra\Bpmn\Models\ScriptTask as ScriptTaskBase;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
@@ -30,7 +30,7 @@ class ScriptTask extends ScriptTaskBase
     /**
      * Model instance for the process instance
      *
-     * @var Process
+     * @var ProcessInstance
      */
     private $model = null;
 
@@ -68,10 +68,10 @@ class ScriptTask extends ScriptTaskBase
             Storage::disk('public')->delete($logfile);
             $this->runCode($this->model, $script, $format, $token);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e->getMessage() . "\n" . $e->getTraceAsString());
             $result = false;
             $this->printOutput($e->getMessage(), $token, $logfile);
-            $token->setProperty('log', $e->getMessage() . "\n" . $e->getTraceAsString());
+            $token->setProperty('log', $e->getMessage());
         }
         ob_end_clean();
         return $result;
@@ -85,7 +85,7 @@ class ScriptTask extends ScriptTaskBase
      *
      * @return mixed
      */
-    private function runCode(Process $model, $script, $format, Token $token)
+    private function runCode(ProcessInstance $model, $script, $format, Token $token)
     {
         return $this->scriptFactory($format)->run($this, $model, $script, $token);
     }
@@ -139,7 +139,7 @@ class ScriptTask extends ScriptTaskBase
     /**
      * Set the model of the process instance
      *
-     * @param \JDD\Workflow\Models\Process $model
+     * @param \JDD\Workflow\Models\ProcessInstance $model
      *
      * @return self
      */

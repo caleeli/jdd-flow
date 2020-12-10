@@ -6,13 +6,13 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 
 class ProcessUpdated implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    /** @var Process */
+    /** @var ProcessInstance */
     public $process;
 
     /**
@@ -20,7 +20,7 @@ class ProcessUpdated implements ShouldBroadcastNow
      *
      * @return void
      */
-    public function __construct(Process $process)
+    public function __construct(ProcessInstance $process)
     {
         $this->process = $process;
     }

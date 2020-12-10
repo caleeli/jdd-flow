@@ -5,7 +5,7 @@ namespace JDD\Workflow\Bpmn\ScriptFormats;
 use Exception;
 use JDD\Workflow\Bpmn\ScriptTask;
 use JDD\Workflow\Bpmn\Token;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 
 abstract class BaseScriptExecutor
 {
@@ -32,7 +32,7 @@ abstract class BaseScriptExecutor
      *
      * @return mixed
      */
-    abstract public function runFile(ScriptTask $scriptTask, Process $model, Token $token);
+    abstract public function runFile(ScriptTask $scriptTask, ProcessInstance $model, Token $token);
 
     /**
      * Run a script code
@@ -42,7 +42,7 @@ abstract class BaseScriptExecutor
      *
      * @return mixed
      */
-    public function run(ScriptTask $scriptTask, Process $model, $script, Token $token)
+    public function run(ScriptTask $scriptTask, ProcessInstance $model, $script, Token $token)
     {
         file_put_contents($this->filename, $script);
         try {

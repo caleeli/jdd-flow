@@ -8,7 +8,7 @@ use JDD\Workflow\Bpmn\Contracts\ResourceAssignmentExpressionInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceRoleInterface;
 use JDD\Workflow\Events\NewProcessEvent;
 use JDD\Workflow\Jobs\ScriptTaskJob;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 use ProcessMaker\Nayra\Bpmn\Collection;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityActivatedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ProcessInstanceCreatedEvent;
@@ -70,7 +70,7 @@ class Manager
     private $instance;
 
     /**
-     * @var Process $processData
+     * @var ProcessInstance $processData
      */
     private $processData;
 
@@ -416,11 +416,11 @@ class Manager
      * @param BpmnDocument $repository
      * @param type $instanceId
      *
-     * @return Process
+     * @return ProcessInstance
      */
     private function loadData(BpmnDocument $repository, $instanceId)
     {
-        $processData = Process::findOrFail($instanceId);
+        $processData = ProcessInstance::findOrFail($instanceId);
         $this->loadProcess($processData->definitions);
         $this->instanceRepository->setRawData([
             $instanceId => [

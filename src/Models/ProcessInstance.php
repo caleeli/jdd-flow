@@ -52,7 +52,7 @@ use JDD\Workflow\Facades\Workflow;
  *      }
  *  )
  */
-class Process extends Model
+class ProcessInstance extends Model
 {
     protected $table = 'process_instances';
     protected $attributes = [

@@ -69,7 +69,7 @@ class ProcessToken extends Model
 
     public function instance()
     {
-        return $this->belongsTo(Process::class);
+        return $this->belongsTo(ProcessInstance::class);
     }
 
     public function scopeWhereActiveIn($query, array $ids)

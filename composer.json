@@ -23,7 +23,7 @@
                 "JDD\\Workflow\\Providers\\PackageServiceProvider"
             ],
             "aliases": {
-                "ProcessInstance": "JDD\\Workflow\\Models\\Process",
+                "ProcessInstance": "JDD\\Workflow\\Models\\ProcessInstance",
                 "ProcessToken": "JDD\\Workflow\\Models\\ProcessToken"
             }
         }

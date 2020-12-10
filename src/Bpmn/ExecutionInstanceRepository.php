@@ -5,7 +5,7 @@ namespace JDD\Workflow\Bpmn;
 use Auth;
 use Blade;
 use Exception;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 use ProcessMaker\Nayra\Contracts\Bpmn\EntityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ParticipantInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
@@ -68,7 +68,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
     public function saveProcessInstance(ExecutionInstance $instance, $bpmn)
     {
         $id = $instance->getId();
-        $processData = Process::findOrNew($id);
+        $processData = ProcessInstance::findOrNew($id);
         if (!$processData->exists) {
             $processData->id = $id;
             $processData->process = $instance->getProcess()->getId();

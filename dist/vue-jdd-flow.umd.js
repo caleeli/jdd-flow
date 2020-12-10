@@ -254,7 +254,7 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
     value: function call(definitions) {
       var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      return this.wrap(this.$api.process.call('call', {
+      return this.wrap(this.$api.process_instance.call('call', {
         definitions: definitions,
         data: data,
         processId: processId
@@ -349,7 +349,7 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
     value: function rowCall(bpmn) {
       var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      return this.$api.process.rowCall('call', {
+      return this.$api.process_instance.rowCall('call', {
         bpmn: bpmn,
         data: data,
         processId: processId
@@ -365,7 +365,7 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
   }, {
     key: "rowComplete",
     value: function rowComplete(token, data) {
-      return this.$api.process[token.attributes.instance_id].rowCall('complete', {
+      return this.$api.process_instance[token.attributes.instance_id].rowCall('complete', {
         tokenId: token.id,
         data: data
       });

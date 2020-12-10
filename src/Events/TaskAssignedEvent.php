@@ -7,7 +7,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
 use JDD\Workflow\Bpmn\Token;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 use JDD\Workflow\Models\ProcessToken;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 

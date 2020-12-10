@@ -4,7 +4,7 @@ namespace JDD\Workflow\Bpmn\ScriptFormats;
 
 use JDD\Workflow\Bpmn\ScriptTask;
 use JDD\Workflow\Bpmn\Token;
-use JDD\Workflow\Models\Process;
+use JDD\Workflow\Models\ProcessInstance;
 
 class PhpScript extends BaseScriptExecutor
 {
@@ -16,10 +16,10 @@ class PhpScript extends BaseScriptExecutor
      *
      * @return mixed
      */
-    public function runFile(ScriptTask $scriptTask, Process $model, Token $token)
+    public function runFile(ScriptTask $scriptTask, ProcessInstance $model, Token $token)
     {
         $self = $this;
-        $closure = function (ScriptTask $scriptTask, Process $model, Token $token) use ($self) {
+        $closure = function (ScriptTask $scriptTask, ProcessInstance $model, Token $token) use ($self) {
             $instance = $token->getInstance();
             $data = $token->getInstance()->getDataStore()->getData();
             return require $self->filename;
