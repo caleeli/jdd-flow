@@ -35,7 +35,6 @@ class PackageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->alias('ProcessToken', ProcessToken::class);
         // Register artisan commands
         $this->commands([UpdatePackage::class]);
         // Register routes
@@ -55,11 +54,15 @@ class PackageServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../config/workflow.php' => config_path('workflow.php'),
         ], self::PluginName);
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
         app('config')->prepend('plugins.javascript_before', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
         app('config')->push('jsonapi.models', 'JDD\Workflow\Models');
         app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../../swagger');
         app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../Models');
+        // Migrations
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+        // Translations
+        $this->loadTranslationsFrom(__DIR__.'/../../resources/lang', 'jddflow');
+        // Menus
         Menu::registerChildren(null, [self::class, 'workflowMenu']);
     }
 

@@ -14,6 +14,18 @@ class Bpmn
   get $router() {
     return this.$owner.$router;
   }
+  get $tokens() {
+    return this.$owner.$api.process_tokens;
+  }
+  get $token() {
+    return this.$owner.$api.process_token;
+  }
+  get $instances() {
+    return this.$owner.$api.process_instances;
+  }
+  get $instance() {
+    return this.$owner.$api.process_instance;
+  }
   wrap(object) {
     const bpmn = this;
     return Object.assign(object, {

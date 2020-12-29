@@ -7,6 +7,7 @@ use JDD\Workflow\Bpmn\Contracts\PotentialOwnerInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceAssignmentExpressionInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceRoleInterface;
 use JDD\Workflow\Events\NewProcessEvent;
+use JDD\Workflow\Exceptions\TokenNotFoundException;
 use JDD\Workflow\Jobs\ScriptTaskJob;
 use JDD\Workflow\Models\ProcessInstance;
 use ProcessMaker\Nayra\Bpmn\Collection;
@@ -246,15 +247,20 @@ class Manager
         // Process and instance
         $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
 
+        // Token
+        $token = $instance->getTokens()->findFirst(function ($token) use ($tokenId) {
+            return $token->getId() === $tokenId;
+        });
+        if (!$token) {
+            throw new TokenNotFoundException($tokenId);
+        }
+
         // Update data
         foreach ($data as $key => $value) {
             $instance->getDataStore()->putData($key, $value);
         }
 
         // Complete task
-        $token = $instance->getTokens()->findFirst(function ($token) use ($tokenId) {
-            return $token->getId() === $tokenId;
-        });
         $task = $this->bpmnRepository->getActivity($token->getProperty('element'));
         $task->complete($token);
 

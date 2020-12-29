@@ -421,6 +421,26 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
     get: function get() {
       return this.$owner.$router;
     }
+  }, {
+    key: "$tokens",
+    get: function get() {
+      return this.$owner.$api.process_tokens;
+    }
+  }, {
+    key: "$token",
+    get: function get() {
+      return this.$owner.$api.process_token;
+    }
+  }, {
+    key: "$instances",
+    get: function get() {
+      return this.$owner.$api.process_instances;
+    }
+  }, {
+    key: "$instance",
+    get: function get() {
+      return this.$owner.$api.process_instance;
+    }
   }]);
 
   return Bpmn;
