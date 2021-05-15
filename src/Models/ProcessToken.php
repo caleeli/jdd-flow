@@ -2,9 +2,10 @@
 
 namespace JDD\Workflow\Models;
 
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use JDD\Workflow\Facades\Workflow;
 
 /**
@@ -52,12 +53,22 @@ use JDD\Workflow\Facades\Workflow;
  *          )
  *      }
  *  )
+ * @property int $id
+ * @property int $instance_id
+ * @property string $definitions
+ * @property string $element
+ * @property string $status
+ * @property string $name
+ * @property string $implementation
+ * @property int $index
+ * @property string $log
  */
 class ProcessToken extends Model
 {
     protected $attributes = [
         'id' => '',
         'instance_id' => '',
+        'definitions' => '',
         'element' => '',
         'status' => '',
         'name' => '',
@@ -151,5 +162,47 @@ class ProcessToken extends Model
     {
         $query = $query->select([DB::raw('count(*) as count')]);
         return $query;
+    }
+
+    /**
+     * Get screen for the token
+     *
+     * @return string
+     */
+    public function getScreen()
+    {
+        $element = Workflow::getElementById($this->definitions, $this->element);
+        $implementation = $element->getProperty('implementation');
+        if ($implementation && substr($implementation, 0, 2) === './') {
+            return $this->loadScreenFromFile($implementation);
+        }
+        if ($implementation) {
+            return $implementation;
+        }
+        // Load from documentation
+        $nodes = $element->getBpmnElement()->getElementsByTagName("documentation");
+        foreach ($nodes as $node) {
+            switch ($node->getAttribute('textFormat')) {
+                case 'text/plain':
+                    return trim($node->nodeValue);
+                case 'text/url':
+                    $file = trim($node->nodeValue);
+                    return $this->loadScreenFromFile($file);
+            }
+        }
+        return '';
+    }
+
+    private function loadScreenFromFile($file)
+    {
+        $path = dirname(Workflow::getProcessPath($this->definitions));
+        if (substr($file, 0, 2) !== './') {
+            throw new InvalidArgumentException('Invalid screen resource, should be of type ./filepath.vue');
+        }
+        $filepath = $path . '/' . basename($file);
+        if (!file_exists($filepath)) {
+            throw new InvalidArgumentException('Screen resource not found. ['. $file.']');
+        }
+        return file_get_contents($filepath);
     }
 }

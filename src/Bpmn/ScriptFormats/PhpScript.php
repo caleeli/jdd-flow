@@ -22,7 +22,9 @@ class PhpScript extends BaseScriptExecutor
         $closure = function (ScriptTask $scriptTask, ProcessInstance $model, Token $token) use ($self) {
             $instance = $token->getInstance();
             $data = $token->getInstance()->getDataStore()->getData();
-            return require $self->filename;
+            $response = require $self->filename;
+            $instance->getDataStore()->setData($data);
+            return $response;
         };
         return $closure->call($scriptTask, $scriptTask, $model, $token);
     }

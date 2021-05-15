@@ -54,7 +54,7 @@ class PackageServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../config/workflow.php' => config_path('workflow.php'),
         ], self::PluginName);
-        app('config')->prepend('plugins.javascript_before', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
+        app('config')->push('plugins.javascript_before', '/modules/' . self::PluginName . '/vue-jdd-flow.umd.min.js');
         app('config')->push('jsonapi.models', 'JDD\Workflow\Models');
         app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../../swagger');
         app('config')->push('l5-swagger.paths.annotations', __DIR__ . '/../Models');
@@ -63,7 +63,9 @@ class PackageServiceProvider extends ServiceProvider
         // Translations
         $this->loadTranslationsFrom(__DIR__.'/../../resources/lang', 'jddflow');
         // Menus
-        Menu::registerChildren(null, [self::class, 'workflowMenu']);
+        if (class_exists(Menu::class)) {
+            Menu::registerChildren(null, [self::class, 'workflowMenu']);
+        }
     }
 
     /**

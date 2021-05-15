@@ -35,6 +35,7 @@
         ]
     },
     "require": {
+        "doctrine/dbal": "*",
         "processmaker/nayra": "dev-master"
     }
 }

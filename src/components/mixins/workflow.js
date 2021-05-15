@@ -26,6 +26,15 @@ export default {
         callback,
       );
     },
+    removeSocketListener(channel, event) {
+      this.socketListeners.filter(sl=>sl.channel === channel && sl.event === event)
+        .forEach(element => {
+          window.Echo.private(
+            element.channel
+          ).stopListening(element.event);
+        });
+      this.socketListeners = this.socketListeners.filter(sl=>sl.channel !== channel || sl.event !== event);
+    },
     cleanSocketListeners() {
       // Stop registered socket listeners 
       this.socketListeners.forEach(element => {
@@ -36,14 +45,17 @@ export default {
     },
   },
   mounted() {
-    this.addSocketListener('Bpmn', '.NewProcess', (data) => {
-      this.bpmn.dispatch('NewProcess', data);
-    });
-    const userId = (this.$root.user && this.$root.user.id) || (window.userId);
-    if (userId) {
-      this.addSocketListener(`User.${userId}`, '.TaskAssigned', (data) => {
-        this.bpmn.dispatch('TaskAssigned', data);
-      });
-    }
+    // this.addSocketListener('Bpmn', '.NewProcess', (data) => {
+    //   this.bpmn.dispatch('NewProcess', data);
+    // });
+    // const userId = (this.$root.user && this.$root.user.id) || (window.userId);
+    // if (userId) {
+    //   this.addSocketListener(`User.${userId}`, '.TaskAssigned', (data) => {
+    //     this.bpmn.dispatch('TaskAssigned', data);
+    //   });
+    // }
+  },
+  destroyed() {
+    this.cleanSocketListeners();
   },
 };

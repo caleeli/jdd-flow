@@ -14,6 +14,6 @@ class ProcessObserver
      */
     public function updated(ProcessInstance $process)
     {
-        app('events')->dispatch(new ProcessUpdated($process));
+        //app('events')->dispatch(new ProcessUpdated($process));
     }
 }

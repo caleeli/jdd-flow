@@ -9,25 +9,30 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use JDD\Workflow\Models\ProcessInstance;
+use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 
 /**
  * @method static ProcessUpdated dispatch(ProcessInstance $process)
  */
-class ProcessUpdated implements ShouldBroadcast
+class ActivityActivated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /** @var string */
     public $instanceId;
 
+    /** @var string */
+    public $tokenId;
+
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct(ProcessInstance $process)
+    public function __construct(TokenInterface $token)
     {
-        $this->instanceId = $process->getKey();
+        $this->tokenId = $token->getId();
+        $this->instanceId = $token->getInstance()->getId();
     }
 
     /**
@@ -48,7 +53,7 @@ class ProcessUpdated implements ShouldBroadcast
      */
     public function broadcastAs()
     {
-        return 'ProcessUpdated';
+        return 'ActivityActivated';
     }
 
     /**
@@ -59,7 +64,8 @@ class ProcessUpdated implements ShouldBroadcast
     public function broadcastWith()
     {
         return [
-            'id' => $this->instanceId,
+            'instanceId' => $this->instanceId,
+            'tokenId' => $this->tokenId,
         ];
     }
 }

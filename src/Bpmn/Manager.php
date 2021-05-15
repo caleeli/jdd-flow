@@ -6,12 +6,16 @@ use JDD\Workflow\Bpmn\Contracts\HumanPerformerInterface;
 use JDD\Workflow\Bpmn\Contracts\PotentialOwnerInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceAssignmentExpressionInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceRoleInterface;
+use JDD\Workflow\Events\ActivityActivated;
 use JDD\Workflow\Events\NewProcessEvent;
+use JDD\Workflow\Events\ProcessInstanceCancelled;
+use JDD\Workflow\Events\ProcessInstanceCompleted;
 use JDD\Workflow\Exceptions\TokenNotFoundException;
 use JDD\Workflow\Jobs\ScriptTaskJob;
 use JDD\Workflow\Models\ProcessInstance;
 use ProcessMaker\Nayra\Bpmn\Collection;
 use ProcessMaker\Nayra\Bpmn\Events\ActivityActivatedEvent;
+use ProcessMaker\Nayra\Bpmn\Events\ProcessInstanceCompletedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ProcessInstanceCreatedEvent;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface;
@@ -173,9 +177,33 @@ class Manager
         $dataStore = $this->repository->createDataStore();
         $dataStore->setData($data);
         $instance = $process->call($dataStore);
+        $instance->setName($process->getName());
         $this->engine->runToNextState();
         $this->saveState();
         return $instance;
+    }
+
+    /**
+     * Get process definition
+     *
+     * @param string $bpmn
+     * @param string $elementId
+     *
+     * @return EntityInterface
+     */
+    public function getElementById($bpmn, $elementId)
+    {
+        $this->prepare();
+        // Bpmn Element
+        foreach ($this->getProcessPaths() as $name => $filename) {
+            if ($bpmn === $name) {
+                $this->bpmn = $bpmn;
+                $this->bpmnRepository->load($filename);
+                $element = $this->bpmnRepository->findElementById($elementId)->getBpmnElementInstance();
+                return $element;
+            }
+        }
+        return null;
     }
 
     /**
@@ -201,6 +229,7 @@ class Manager
             $dataStorage
         );
         $event->start($instance);
+        $instance->setName($event->getProcess()->getName());
 
         $this->engine->runToNextState();
         $this->saveState();
@@ -272,6 +301,47 @@ class Manager
     }
 
     /**
+     * Send a message into an process instance
+     *
+     * @param string $instanceId
+     * @param string $targetId
+     * @param string $messageId
+     * @param array $data
+     *
+     * @return ExecutionInstanceInterface
+     */
+    public function sendMessage($instanceId, $targetId, $messageId, $data = [])
+    {
+        $this->prepare();
+        // Load the execution data
+        $this->loadData($this->bpmnRepository, $instanceId);
+
+        // Process and instance
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
+
+        // Update data
+        foreach ($data as $key => $value) {
+            $instance->getDataStore()->putData($key, $value);
+        }
+
+        // Get  target
+        $catchEvent = $this->bpmnRepository->getCatchEvent($targetId);
+
+        // Execute event
+        foreach($catchEvent->getEventDefinitions() as $ed) {
+            if ($ed->getPayload()->getId() === $messageId) {
+                $catchEvent->execute($ed, $instance);
+            }
+        }
+
+        $this->engine->runToNextState();
+        $this->saveState();
+
+        //Return the instance id
+        return $instance;
+    }
+
+    /**
      * Update data from a task
      *
      * @param string $instanceId
@@ -312,12 +382,30 @@ class Manager
     {
         $this->prepare();
         //Load the execution data
-        $processData = $this->loadData($this->bpmnRepository, $instanceId);
+        $this->loadData($this->bpmnRepository, $instanceId);
 
-        $processData->status = 'CANCELED';
-        $processData->save();
+        $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
+        $instance->close();
+        $instance->setProperty('status', 'CANCELED');
+        $this->engine->runToNextState();
+        $this->saveState();
+        ProcessInstanceCancelled::dispatch($instance);
+        return $instance;
+    }
 
-        //Return the instance id
+    /**
+     * Load an instance by id.
+     *
+     * @param string $instanceId
+     *
+     * @return ExecutionInstanceInterface
+     */
+    public function loadInstance($instanceId)
+    {
+        $this->prepare();
+        //Load the execution data
+        $this->loadData($this->bpmnRepository, $instanceId);
+
         $instance = $this->engine->loadExecutionInstance($instanceId, $this->bpmnRepository);
         return $instance;
     }
@@ -389,12 +477,31 @@ class Manager
     public function getProcessPaths()
     {
         $paths = [];
-        foreach (config('workflow.processes') as $path) {
+        foreach (config('workflow.processes', []) as $path) {
             foreach (glob($path) as $filename) {
                 $paths[basename($filename)] = $filename;
             }
         }
         return $paths;
+    }
+
+    /**
+     * Get process path
+     *
+     * @param string $bpmn
+     *
+     * @return string
+     */
+    public function getProcessPath($bpmn)
+    {
+        foreach (config('workflow.processes', []) as $path) {
+            foreach (glob($path) as $filename) {
+                if ($bpmn === basename($filename)) {
+                    return realpath($filename);
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -432,6 +539,8 @@ class Manager
             $instanceId => [
                 'id' => $instanceId,
                 'processId' => $processData->process,
+                'name' => $processData->name,
+                'status' => $processData->status,
                 'data' => json_decode(json_encode($processData->data), true),
                 'tokens' => $processData->tokens->toArray(),
             ]
@@ -458,12 +567,19 @@ class Manager
                 $resources = $event->activity->getProperty('resources');
                 $this->assignResource($event->token, $resources, $event->activity);
                 $this->saveProcessInstance($event->token->getInstance());
+                ActivityActivated::dispatch($event->token);
             }
         );
         $this->dispatcher->listen(
             ProcessInterface::EVENT_PROCESS_INSTANCE_CREATED,
             function (ProcessInstanceCreatedEvent $event) {
                 event(new NewProcessEvent($event->instance));
+            }
+        );
+        $this->dispatcher->listen(
+            ProcessInterface::EVENT_PROCESS_INSTANCE_COMPLETED,
+            function (ProcessInstanceCompletedEvent $event) {
+                ProcessInstanceCompleted::dispatch($event->instance);
             }
         );
     }

@@ -8,12 +8,13 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use JDD\Workflow\Bpmn\ExecutionInstance;
 use JDD\Workflow\Models\ProcessInstance;
 
 /**
  * @method static ProcessUpdated dispatch(ProcessInstance $process)
  */
-class ProcessUpdated implements ShouldBroadcast
+class ProcessInstanceCancelled implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -25,9 +26,9 @@ class ProcessUpdated implements ShouldBroadcast
      *
      * @return void
      */
-    public function __construct(ProcessInstance $process)
+    public function __construct(ExecutionInstance $instance)
     {
-        $this->instanceId = $process->getKey();
+        $this->instanceId = $instance->getId();
     }
 
     /**
@@ -48,7 +49,7 @@ class ProcessUpdated implements ShouldBroadcast
      */
     public function broadcastAs()
     {
-        return 'ProcessUpdated';
+        return 'ProcessInstanceCancelled';
     }
 
     /**
@@ -59,7 +60,7 @@ class ProcessUpdated implements ShouldBroadcast
     public function broadcastWith()
     {
         return [
-            'id' => $this->instanceId,
+            'instanceId' => $this->instanceId,
         ];
     }
 }

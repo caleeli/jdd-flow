@@ -15,7 +15,7 @@ class CreateProcessInstancesTable extends Migration
     {
         Schema::create('process_instances', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('process');
             $table->string('definitions');
             $table->string('status');

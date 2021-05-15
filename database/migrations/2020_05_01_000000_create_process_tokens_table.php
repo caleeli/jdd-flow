@@ -15,8 +15,8 @@ class CreateProcessTokensTable extends Migration
     {
         Schema::create('process_tokens', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('instance_id');
-            $table->bigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('instance_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('definitions');
             $table->string('element');
             $table->string('status');

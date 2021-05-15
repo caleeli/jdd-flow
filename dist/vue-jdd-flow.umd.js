@@ -177,282 +177,14 @@ module.exports = function (Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-// EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
-var web_dom_iterable = __webpack_require__("ac6a");
-
-// EXTERNAL MODULE: ./node_modules/core-js/modules/es6.object.assign.js
-var es6_object_assign = __webpack_require__("f751");
-
-// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/esm/classCallCheck.js
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-// EXTERNAL MODULE: ./node_modules/@babel/runtime-corejs2/core-js/object/define-property.js
-var define_property = __webpack_require__("85f2");
-var define_property_default = /*#__PURE__*/__webpack_require__.n(define_property);
-
-// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/esm/createClass.js
+/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("ac6a");
+/* harmony import */ var core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_iterable__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _classes_Bpmn__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__("3d23");
 
 
-function _defineProperties(target, props) {
-  for (var i = 0; i < props.length; i++) {
-    var descriptor = props[i];
-    descriptor.enumerable = descriptor.enumerable || false;
-    descriptor.configurable = true;
-    if ("value" in descriptor) descriptor.writable = true;
-
-    define_property_default()(target, descriptor.key, descriptor);
-  }
-}
-
-function _createClass(Constructor, protoProps, staticProps) {
-  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-  if (staticProps) _defineProperties(Constructor, staticProps);
-  return Constructor;
-}
-// CONCATENATED MODULE: ./src/components/classes/Bpmn.js
-
-
-
-
-
-var Bpmn_Bpmn = /*#__PURE__*/function () {
-  function Bpmn(props) {
-    _classCallCheck(this, Bpmn);
-
-    Object.assign(this, props);
-    this.observers = [];
-  }
-
-  _createClass(Bpmn, [{
-    key: "wrap",
-    value: function wrap(object) {
-      var bpmn = this;
-      return Object.assign(object, {
-        thenRoute: function thenRoute(element) {
-          bpmn.listenOnce('TaskAssigned', function (token) {
-            if (!element || element === token.element) {
-              bpmn.routeTo(token);
-            }
-          });
-        }
-      });
-    }
-    /**
-     * Call a process from a BPMN process definition
-     *
-     * @param {*} definitions Bpmn file that contains the definitions
-     * @param {*} data Initial data
-     * @param {*} processId Process ID
-     */
-
-  }, {
-    key: "call",
-    value: function call(definitions) {
-      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      return this.wrap(this.$api.process_instance.call('call', {
-        definitions: definitions,
-        data: data,
-        processId: processId
-      }));
-    }
-    /**
-     * Complete an active token
-     *
-     * @param {*} data 
-     * @param {*} tokenId 
-     */
-
-  }, {
-    key: "complete",
-    value: function complete(data) {
-      var tokenId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.tokenId;
-      return this.wrap(this.$api.process_token[tokenId].call('complete', {
-        data: data
-      }));
-    }
-    /**
-     * Update data from a token
-     *
-     * @param {*} data 
-     * @param {*} tokenId 
-     */
-
-  }, {
-    key: "update",
-    value: function update(data) {
-      var tokenId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.tokenId;
-      return this.$api.process_token[tokenId].call('updateData', {
-        data: data
-      });
-    }
-    /**
-     * Get the implementation route of a token
-     *
-     * @param {*} token 
-     */
-
-  }, {
-    key: "route",
-    value: function route(token) {
-      var start = token.attributes.implementation.indexOf('#');
-      return start > -1 && {
-        path: token.attributes.implementation.substr(start + 1),
-        query: {
-          tokenId: token.id
-        }
-      };
-    }
-    /**
-     * Route to implementation of a token
-     *
-     * @param {*} token 
-     */
-
-  }, {
-    key: "routeTo",
-    value: function routeTo(token) {
-      this.$router.push(this.route(token));
-    }
-    /**
-     * Get data available for tokenId
-     *
-     * @param array variables 
-     * @param object defaultData
-     * @param int tokenId 
-     */
-
-  }, {
-    key: "data",
-    value: function data() {
-      var variables = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ['*'];
-      var defaultData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      var tokenId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.tokenId;
-      return this.$api.process_token[tokenId].rowCall('getData', {
-        variables: variables,
-        default: defaultData
-      }, defaultData);
-    }
-    /**
-     * Get the result of a call process
-     *
-     * @param {*} process 
-     * @param {*} data 
-     */
-
-  }, {
-    key: "rowCall",
-    value: function rowCall(bpmn) {
-      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-      return this.$api.process_instance.rowCall('call', {
-        bpmn: bpmn,
-        data: data,
-        processId: processId
-      });
-    }
-    /**
-     * Get the result of a complete active token
-     *
-     * @param {*} token 
-     * @param {*} data 
-     */
-
-  }, {
-    key: "rowComplete",
-    value: function rowComplete(token, data) {
-      return this.$api.process_instance[token.attributes.instance_id].rowCall('complete', {
-        tokenId: token.id,
-        data: data
-      });
-    }
-    /**
-     * Dispatch an bpmn event
-     *
-     * @param {*} event 
-     * @param {*} data 
-     */
-
-  }, {
-    key: "dispatch",
-    value: function dispatch(event, data) {
-      this[event] = data;
-      this.observers.forEach(function (observer) {
-        if (observer.event === event) {
-          observer.callback(data);
-        }
-      });
-      this.observers = this.observers.filter(function (observer) {
-        return !observer.once || observer.event !== event;
-      });
-    }
-    /**
-     * Add a listener that is triggered once
-     *
-     * @param {*} event 
-     * @param {*} callback 
-     */
-
-  }, {
-    key: "listenOnce",
-    value: function listenOnce(event, callback) {
-      this.observers.push({
-        event: event,
-        callback: callback,
-        once: true
-      });
-    }
-  }, {
-    key: "$api",
-    get: function get() {
-      return this.$owner.$api;
-    }
-  }, {
-    key: "$route",
-    get: function get() {
-      return this.$owner.$route;
-    }
-  }, {
-    key: "$router",
-    get: function get() {
-      return this.$owner.$router;
-    }
-  }, {
-    key: "$tokens",
-    get: function get() {
-      return this.$owner.$api.process_tokens;
-    }
-  }, {
-    key: "$token",
-    get: function get() {
-      return this.$owner.$api.process_token;
-    }
-  }, {
-    key: "$instances",
-    get: function get() {
-      return this.$owner.$api.process_instances;
-    }
-  }, {
-    key: "$instance",
-    get: function get() {
-      return this.$owner.$api.process_instance;
-    }
-  }]);
-
-  return Bpmn;
-}();
-
-/* harmony default export */ var classes_Bpmn = (Bpmn_Bpmn);
-// CONCATENATED MODULE: ./src/components/mixins/workflow.js
-
-
-/* harmony default export */ var workflow = __webpack_exports__["a"] = ({
+/* harmony default export */ __webpack_exports__["a"] = ({
   beforeCreate: function beforeCreate() {
-    this.bpmn = new classes_Bpmn({
+    this.bpmn = new _classes_Bpmn__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"]({
       $owner: this,
       // Events
       NewProcess: null,
@@ -473,6 +205,16 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
       });
       window.Echo.private(channel).listen(event, callback);
     },
+    removeSocketListener: function removeSocketListener(channel, event) {
+      this.socketListeners.filter(function (sl) {
+        return sl.channel === channel && sl.event === event;
+      }).forEach(function (element) {
+        window.Echo.private(element.channel).stopListening(element.event);
+      });
+      this.socketListeners = this.socketListeners.filter(function (sl) {
+        return sl.channel !== channel || sl.event !== event;
+      });
+    },
     cleanSocketListeners: function cleanSocketListeners() {
       // Stop registered socket listeners 
       this.socketListeners.forEach(function (element) {
@@ -480,19 +222,18 @@ var Bpmn_Bpmn = /*#__PURE__*/function () {
       });
     }
   },
-  mounted: function mounted() {
-    var _this = this;
-
-    this.addSocketListener('Bpmn', '.NewProcess', function (data) {
-      _this.bpmn.dispatch('NewProcess', data);
-    });
-    var userId = this.$root.user && this.$root.user.id || window.userId;
-
-    if (userId) {
-      this.addSocketListener("User.".concat(userId), '.TaskAssigned', function (data) {
-        _this.bpmn.dispatch('TaskAssigned', data);
-      });
-    }
+  mounted: function mounted() {// this.addSocketListener('Bpmn', '.NewProcess', (data) => {
+    //   this.bpmn.dispatch('NewProcess', data);
+    // });
+    // const userId = (this.$root.user && this.$root.user.id) || (window.userId);
+    // if (userId) {
+    //   this.addSocketListener(`User.${userId}`, '.TaskAssigned', (data) => {
+    //     this.bpmn.dispatch('TaskAssigned', data);
+    //   });
+    // }
+  },
+  destroyed: function destroyed() {
+    this.cleanSocketListeners();
   }
 });
 
@@ -783,6 +524,283 @@ module.exports = Object.getPrototypeOf || function (O) {
   } return O instanceof Object ? ObjectProto : null;
 };
 
+
+/***/ }),
+
+/***/ "3d23":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
+var web_dom_iterable = __webpack_require__("ac6a");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es6.object.assign.js
+var es6_object_assign = __webpack_require__("f751");
+
+// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/esm/classCallCheck.js
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+// EXTERNAL MODULE: ./node_modules/@babel/runtime-corejs2/core-js/object/define-property.js
+var define_property = __webpack_require__("85f2");
+var define_property_default = /*#__PURE__*/__webpack_require__.n(define_property);
+
+// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/esm/createClass.js
+
+
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+
+    define_property_default()(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+// CONCATENATED MODULE: ./src/components/classes/Bpmn.js
+
+
+
+
+
+var Bpmn_Bpmn = /*#__PURE__*/function () {
+  function Bpmn(props) {
+    _classCallCheck(this, Bpmn);
+
+    Object.assign(this, props);
+    this.observers = [];
+  }
+
+  _createClass(Bpmn, [{
+    key: "wrap",
+    value: function wrap(object) {
+      var bpmn = this;
+      return Object.assign(object, {
+        thenRoute: function thenRoute(element) {
+          bpmn.listenOnce('TaskAssigned', function (token) {
+            if (!element || element === token.element) {
+              bpmn.routeTo(token);
+            }
+          });
+        }
+      });
+    }
+    /**
+     * Call a process from a BPMN process definition
+     *
+     * @param {*} definitions Bpmn file that contains the definitions
+     * @param {*} data Initial data
+     * @param {*} processId Process ID
+     */
+
+  }, {
+    key: "call",
+    value: function call(definitions) {
+      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      return this.wrap(this.$api.process_instance.call('call', {
+        definitions: definitions,
+        data: data,
+        processId: processId
+      }));
+    }
+    /**
+     * Complete an active token
+     *
+     * @param {*} data 
+     * @param {*} tokenId 
+     */
+
+  }, {
+    key: "complete",
+    value: function complete(data) {
+      var tokenId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.tokenId;
+      return this.wrap(this.$api.process_token[tokenId].call('complete', {
+        data: data
+      }));
+    }
+    /**
+     * Update data from a token
+     *
+     * @param {*} data 
+     * @param {*} tokenId 
+     */
+
+  }, {
+    key: "update",
+    value: function update(data) {
+      var tokenId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.$route.query.tokenId;
+      return this.$api.process_token[tokenId].call('updateData', {
+        data: data
+      });
+    }
+    /**
+     * Get the implementation route of a token
+     *
+     * @param {*} token 
+     */
+
+  }, {
+    key: "route",
+    value: function route(token) {
+      var start = token.attributes.implementation.indexOf('#');
+      return start > -1 && {
+        path: token.attributes.implementation.substr(start + 1),
+        query: {
+          tokenId: token.id
+        }
+      };
+    }
+    /**
+     * Route to implementation of a token
+     *
+     * @param {*} token 
+     */
+
+  }, {
+    key: "routeTo",
+    value: function routeTo(token) {
+      this.$router.push(this.route(token));
+    }
+    /**
+     * Get data available for tokenId
+     *
+     * @param array variables 
+     * @param object defaultData
+     * @param int tokenId 
+     */
+
+  }, {
+    key: "data",
+    value: function data() {
+      var variables = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ['*'];
+      var defaultData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var tokenId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.$route.query.tokenId;
+      return this.$api.process_token[tokenId].rowCall('getData', {
+        variables: variables,
+        default: defaultData
+      }, defaultData);
+    }
+    /**
+     * Get the result of a call process
+     *
+     * @param {*} process 
+     * @param {*} data 
+     */
+
+  }, {
+    key: "rowCall",
+    value: function rowCall(bpmn) {
+      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var processId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      return this.$api.process_instance.rowCall('call', {
+        bpmn: bpmn,
+        data: data,
+        processId: processId
+      });
+    }
+    /**
+     * Get the result of a complete active token
+     *
+     * @param {*} token 
+     * @param {*} data 
+     */
+
+  }, {
+    key: "rowComplete",
+    value: function rowComplete(token, data) {
+      return this.$api.process_instance[token.attributes.instance_id].rowCall('complete', {
+        tokenId: token.id,
+        data: data
+      });
+    }
+    /**
+     * Dispatch an bpmn event
+     *
+     * @param {*} event 
+     * @param {*} data 
+     */
+
+  }, {
+    key: "dispatch",
+    value: function dispatch(event, data) {
+      this[event] = data;
+      this.observers.forEach(function (observer) {
+        if (observer.event === event) {
+          observer.callback(data);
+        }
+      });
+      this.observers = this.observers.filter(function (observer) {
+        return !observer.once || observer.event !== event;
+      });
+    }
+    /**
+     * Add a listener that is triggered once
+     *
+     * @param {*} event 
+     * @param {*} callback 
+     */
+
+  }, {
+    key: "listenOnce",
+    value: function listenOnce(event, callback) {
+      this.observers.push({
+        event: event,
+        callback: callback,
+        once: true
+      });
+    }
+  }, {
+    key: "$api",
+    get: function get() {
+      return this.$owner.$api;
+    }
+  }, {
+    key: "$route",
+    get: function get() {
+      return this.$owner.$route;
+    }
+  }, {
+    key: "$router",
+    get: function get() {
+      return this.$owner.$router;
+    }
+  }, {
+    key: "$tokens",
+    get: function get() {
+      return this.$owner.$api.process_tokens;
+    }
+  }, {
+    key: "$token",
+    get: function get() {
+      return this.$owner.$api.process_token;
+    }
+  }, {
+    key: "$instances",
+    get: function get() {
+      return this.$owner.$api.process_instances;
+    }
+  }, {
+    key: "$instance",
+    get: function get() {
+      return this.$owner.$api.process_instance;
+    }
+  }]);
+
+  return Bpmn;
+}();
+
+/* harmony default export */ var classes_Bpmn = __webpack_exports__["a"] = (Bpmn_Bpmn);
 
 /***/ }),
 
@@ -1439,7 +1457,7 @@ var staticRenderFns = []
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
 var web_dom_iterable = __webpack_require__("ac6a");
 
-// EXTERNAL MODULE: ./src/components/mixins/workflow.js + 3 modules
+// EXTERNAL MODULE: ./src/components/mixins/workflow.js
 var workflow = __webpack_require__("05f0");
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/routes/NextStep.vue?vue&type=script&lang=js&
@@ -2085,25 +2103,30 @@ var web_dom_iterable = __webpack_require__("ac6a");
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es6.array.iterator.js
 var es6_array_iterator = __webpack_require__("cadf");
 
-// EXTERNAL MODULE: ./src/components/mixins/workflow.js + 3 modules
+// EXTERNAL MODULE: ./src/components/mixins/workflow.js
 var workflow = __webpack_require__("05f0");
+
+// EXTERNAL MODULE: ./src/components/classes/Bpmn.js + 2 modules
+var Bpmn = __webpack_require__("3d23");
 
 // CONCATENATED MODULE: ./src/index.js
 
 
 
+
 window.WorkflowMixin = workflow["a" /* default */];
+window.Bpmn = Bpmn["a" /* default */];
 window.addEventListener('load', function () {
   // Register ../routes/* as routes
   var files = __webpack_require__("f97e");
 
   files.keys().map(function (key) {
     // Register component as route
-    window.router.addRoutes([{
+    window.router.addRoute({
       path: files(key).default.path,
       component: files(key).default,
       props: true
-    }]);
+    });
   });
 });
 // CONCATENATED MODULE: ./node_modules/@vue/cli-service/lib/commands/build/entry-lib-no-default.js

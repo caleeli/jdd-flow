@@ -2,9 +2,11 @@
 
 namespace JDD\Workflow\Models;
 
-use Auth;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use JDD\Workflow\Facades\Workflow;
+use ProcessMaker\Nayra\Contracts\Bpmn\BoundaryEventInterface;
+use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
 
 /**
  * Process model
@@ -51,17 +53,31 @@ use JDD\Workflow\Facades\Workflow;
  *          )
  *      }
  *  )
+ *
+ * @property string $definitions
+ * @property object $name
+ * @property object $data
+ * @property string $status Status of the process instance
+ * @property ProcessAction[] $actions
+ * @property ProcessToken[] $tokens
+ * @property ProcessToken[] $active_tokens
+ *
+ * @method static ProcessInstance find(string $id)
+ * @method static ProcessInstance findOrNew(string $id)
+ * @method mixed save()
  */
 class ProcessInstance extends Model
 {
     protected $table = 'process_instances';
     protected $attributes = [
         'definitions' => '',
+        'name' => '',
         'data' => '{}',
         'status' => 'ACTIVE',
     ];
     protected $fillable = [
         'definitions',
+        'name',
         'data',
         'status',
     ];
@@ -69,15 +85,15 @@ class ProcessInstance extends Model
     ];
 
     /**
-     * Get data object
+     * Get data array
      *
      * @param string $value
      *
-     * @return object
+     * @return array
      */
     public function getDataAttribute($value)
     {
-        return json_decode($value);
+        return json_decode($value, \true);
     }
 
     /**
@@ -95,13 +111,15 @@ class ProcessInstance extends Model
     /**
      * Call a process with the workflow engine
      *
+     * @param string $bpmn
+     * @param string $processId
      * @param array $data
      *
      * @return array
      */
-    public function call($definitions, array $data, $processId)
+    public function callProcess($bpmn, $processId, array $data)
     {
-        $instance = Workflow::callProcess($definitions, $data, $processId);
+        $instance = Workflow::callProcess($bpmn, $data, $processId);
         return [
             'id' => $instance->getId(),
             'attributes' => $instance->getProperties(),
@@ -169,6 +187,11 @@ class ProcessInstance extends Model
         return $this->hasMany(ProcessToken::class, 'instance_id');
     }
 
+    public function active_tokens()
+    {
+        return $this->hasMany(ProcessToken::class, 'instance_id')->where('status', 'ACTIVE');
+    }
+
     public function setTokensAttribute(array $tokens)
     {
         if ($this->exists) {
@@ -189,9 +212,7 @@ class ProcessInstance extends Model
                 $t->definitions = $this->definitions;
                 $t->save();
             }
-            if ($ids) {
-                $this->tokens()->whereNotIn('id', $ids)->update(['status' => 'CLOSED']);
-            }
+            $this->tokens()->whereNotIn('id', $ids)->update(['status' => 'CLOSED']);
         } else {
             static::created(function ($issue) use ($tokens) {
                 $issue->tokens = $tokens;
@@ -209,5 +230,107 @@ class ProcessInstance extends Model
     public function scopeWhereUserLogged($query)
     {
         return $query->where('user_id', Auth::id());
+    }
+
+    /**
+     * Return process properties
+     *
+     * @param string $bpmn
+     * @param string $processId
+     *
+     * @return array
+     */
+    public function getProcess($bpmn, $processId)
+    {
+        return Workflow::getElementById($bpmn, $processId)->getProperties();
+    }
+
+    /**
+     * Get screen for the user id
+     *
+     * @property string $userId
+     *
+     * @return string
+     */
+    public function getScreen($userId = null)
+    {
+        if (!$userId) {
+            $userId = Auth::id();
+        }
+        $token = $this->tokens()->where('user_id', $userId)->orderBy('id', 'desc')->limit(1)->first();
+        if ($token) {
+            return $token->getScreen();
+        }
+        return '';
+    }
+
+    /**
+     * Process actions
+     *
+     * @return HasMany
+     */
+    public function actions()
+    {
+        return $this->hasMany(ProcessAction::class);
+    }
+
+    /**
+     * Get actions (events) that could be executed in the process instance
+     *
+     * @param ExecutionInstanceInterface $instance
+     *
+     * @return array
+     */
+    public function getActions(ExecutionInstanceInterface $instance = null)
+    {
+        if (!$instance) {
+            $instance = Workflow::loadInstance($this->id);
+        }
+        $actions = [];
+        $boundaryEvents = $instance->getProcess()->getOwnerDocument()->getElementsByTagName('boundaryEvent');
+        foreach ($boundaryEvents as $boundaryEvent) {
+            $actions = $this->addActionsFromBoundaryEvent(
+                $instance,
+                $this,
+                $boundaryEvent->getBpmnElementInstance(),
+                $actions
+            );
+        }
+        return $actions;
+    }
+
+    private function addActionsFromBoundaryEvent(ExecutionInstanceInterface $instance, ProcessInstance $model, BoundaryEventInterface $boundary, array $actions)
+    {
+        $tokens = $boundary->getAttachedTo()->getTokens($instance);
+        foreach ($tokens as $token) {
+            if ($token->getStatus() === 'CLOSED') {
+                continue;
+            }
+            foreach ($boundary->getEventDefinitions() as $event) {
+                $actions[] = [
+                    'process_instance_id' => $instance->getId(),
+                    'process_token_id' => $token->getId(),
+                    'definitions' => $model->definitions,
+                    'element' => $boundary->getId(),
+                    'event' => $event->getPayload()->getId(),
+                    'name' => $event->getPayload()->getProperty('name'),
+                ];
+            }
+        }
+        return $actions;
+    }
+
+    /**
+     * Send a message into a process instance
+     *
+     * @param string $targetId
+     * @param string $messageId
+     * @param array $data
+     *
+     * @return void
+     */
+    public function sendMessage($targetId, $messageId, array $data = [])
+    {
+        Workflow::sendMessage($this->id, $targetId, $messageId, $data);
     }
 }

@@ -29,7 +29,7 @@ class TokenRepository implements TokenRepositoryInterface
     public function createTokenInstance()
     {
         $token = new Token();
-        $token->setId(hexdec(uniqid()));
+        $token->setId(IdGenerator::newInt());
         return $token;
     }
 

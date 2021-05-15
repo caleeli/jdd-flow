@@ -2,10 +2,12 @@
 
 namespace JDD\Workflow\Bpmn;
 
-use Auth;
-use Blade;
 use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
+use JDD\Workflow\Events\ProcessUpdated;
 use JDD\Workflow\Models\ProcessInstance;
+use ProcessMaker\Nayra\Contracts\Bpmn\BoundaryEventInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\EntityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ParticipantInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
@@ -43,6 +45,8 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $data = self::$data[$uid];
         $instance = $this->createExecutionInstance();
         $instance->setId($uid);
+        $instance->setName($data['name']);
+        $instance->setProperty('status', $data['status']);
         $process = $storage->getProcess($data['processId']);
         $dataStore = $storage->getFactory()->createDataStore();
         $dataStore->setData($data['data']);
@@ -75,6 +79,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
             $processData->definitions = $bpmn;
             $processData->user_id = Auth::id();
         }
+        $processData->status = $instance->getProperty('status', 'ACTIVE');
         $dataStore = $instance->getDataStore();
         $tokens = $instance->getTokens();
         $data = $instance->getDataStore()->getData();
@@ -95,8 +100,13 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
             ];
         }
         $processData->tokens = $mtokens;
+        $processData->name = $instance->getName();
         $processData->data = $dataStore->getData();
         $processData->save();
+        // Save actions
+        $this->saveActions($instance, $processData);
+        // triggers event on this save. Observer did not trigger it if called twice in a http request
+        ProcessUpdated::dispatch($processData);
     }
 
     /**
@@ -183,6 +193,18 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
      */
     public function persistInstanceCompleted(ExecutionInstanceInterface $instance)
     {
+        $id = $instance->getId();
+        $process = ProcessInstance::find($id);
+        if ($process) {
+            $status = $instance->getProperty('status');
+            if ($status === 'ACTIVE') {
+                $status = 'COMPLETED';
+                $instance->setProperty('status', $status);
+            }
+            $process->status = $status;
+            $process->save();
+            ProcessUpdated::dispatch($process);
+        }
     }
 
     /**
@@ -195,5 +217,12 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
      */
     public function persistInstanceCollaboration(ExecutionInstanceInterface $target, ParticipantInterface $targetParticipant, ExecutionInstanceInterface $source, ParticipantInterface $sourceParticipant)
     {
+    }
+
+    private function saveActions(ExecutionInstanceInterface $instance, ProcessInstance $model)
+    {
+        $actions = $model->getActions($instance);
+        $model->actions()->delete();
+        $model->actions()->createMany($actions);
     }
 }
