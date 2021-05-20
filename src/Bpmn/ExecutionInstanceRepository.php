@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use JDD\Workflow\Events\ProcessUpdated;
 use JDD\Workflow\Models\ProcessInstance;
-use ProcessMaker\Nayra\Contracts\Bpmn\BoundaryEventInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\EntityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ParticipantInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
@@ -44,6 +43,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         }
         $data = self::$data[$uid];
         $instance = $this->createExecutionInstance();
+        $instance->setProperties($data['props']);
         $instance->setId($uid);
         $instance->setName($data['name']);
         $instance->setProperty('status', $data['status']);
@@ -79,6 +79,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
             $processData->definitions = $bpmn;
             $processData->user_id = Auth::id();
         }
+        $processData->props = $instance->getProperties();
         $processData->status = $instance->getProperty('status', 'ACTIVE');
         $dataStore = $instance->getDataStore();
         $tokens = $instance->getTokens();
@@ -86,11 +87,10 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
         $mtokens = [];
         foreach ($tokens as $token) {
             $element = $token->getOwnerElement();
-            $name = $this->parseDocumentation($element, '@name', $data) ?: $element->getName();
             $mtokens[] = [
                 'id' => $token->getId(),
                 'element' => $element->getId(),
-                'name' => $name,
+                'name' => $instance->trans($element->getName(), $data),
                 'type' => $element->getBpmnElement()->localName,
                 'implementation' => $token->getImplementation(),
                 'user_id' => $token->getProperty('user_id'),
@@ -201,6 +201,7 @@ class ExecutionInstanceRepository implements ExecutionInstanceRepositoryInterfac
                 $status = 'COMPLETED';
                 $instance->setProperty('status', $status);
             }
+            $process->props = $instance->getProperties();
             $process->status = $status;
             $process->save();
             ProcessUpdated::dispatch($process);

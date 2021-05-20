@@ -4,6 +4,7 @@ namespace JDD\Workflow\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use JDD\Workflow\Bpmn\ExecutionInstance;
 use JDD\Workflow\Facades\Workflow;
 use ProcessMaker\Nayra\Contracts\Bpmn\BoundaryEventInterface;
 use ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface;
@@ -73,15 +74,18 @@ class ProcessInstance extends Model
         'definitions' => '',
         'name' => '',
         'data' => '{}',
+        'props' => '{}',
         'status' => 'ACTIVE',
     ];
     protected $fillable = [
         'definitions',
         'name',
         'data',
+        'props',
         'status',
     ];
     protected $casts = [
+        'props' => 'array',
     ];
 
     /**
@@ -299,7 +303,7 @@ class ProcessInstance extends Model
         return $actions;
     }
 
-    private function addActionsFromBoundaryEvent(ExecutionInstanceInterface $instance, ProcessInstance $model, BoundaryEventInterface $boundary, array $actions)
+    private function addActionsFromBoundaryEvent(ExecutionInstance $instance, ProcessInstance $model, BoundaryEventInterface $boundary, array $actions)
     {
         $tokens = $boundary->getAttachedTo()->getTokens($instance);
         foreach ($tokens as $token) {
@@ -307,13 +311,17 @@ class ProcessInstance extends Model
                 continue;
             }
             foreach ($boundary->getEventDefinitions() as $event) {
+                $payload = $event->getPayload();
+                if (!$payload) {
+                    continue;
+                }
                 $actions[] = [
                     'process_instance_id' => $instance->getId(),
                     'process_token_id' => $token->getId(),
                     'definitions' => $model->definitions,
                     'element' => $boundary->getId(),
-                    'event' => $event->getPayload()->getId(),
-                    'name' => $event->getPayload()->getProperty('name'),
+                    'event' => $payload->getId(),
+                    'name' => $instance->trans($payload->getProperty('name')),
                 ];
             }
         }

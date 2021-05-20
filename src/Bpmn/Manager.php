@@ -18,6 +18,7 @@ use ProcessMaker\Nayra\Bpmn\Events\ActivityActivatedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ProcessInstanceCompletedEvent;
 use ProcessMaker\Nayra\Bpmn\Events\ProcessInstanceCreatedEvent;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
+use ProcessMaker\Nayra\Contracts\Bpmn\ErrorEventDefinitionInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\ScriptTaskInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
@@ -542,6 +543,7 @@ class Manager
                 'name' => $processData->name,
                 'status' => $processData->status,
                 'data' => json_decode(json_encode($processData->data), true),
+                'props' => json_decode(json_encode($processData->props ?: []), true),
                 'tokens' => $processData->tokens->toArray(),
             ]
         ]);
@@ -570,6 +572,15 @@ class Manager
                 ActivityActivated::dispatch($event->token);
             }
         );
+        //$this->dispatcher->listen(
+        //    ActivityInterface::EVENT_ACTIVITY_EXCEPTION,
+        //    function (ActivityInterface $activity, TokenInterface $token) {
+        //        $resources = $event->activity->getProperty('resources');
+        //        $this->assignResource($event->token, $resources, $event->activity);
+        //        $this->saveProcessInstance($event->token->getInstance());
+        //        ActivityActivated::dispatch($event->token);
+        //    }
+        //);
         $this->dispatcher->listen(
             ProcessInterface::EVENT_PROCESS_INSTANCE_CREATED,
             function (ProcessInstanceCreatedEvent $event) {
@@ -580,6 +591,18 @@ class Manager
             ProcessInterface::EVENT_PROCESS_INSTANCE_COMPLETED,
             function (ProcessInstanceCompletedEvent $event) {
                 ProcessInstanceCompleted::dispatch($event->instance);
+            }
+        );
+        $this->dispatcher->listen(
+            ErrorEventDefinitionInterface::EVENT_THROW_EVENT_DEFINITION,
+            function ($element, TokenInterface $innerToken, ErrorEventDefinitionInterface $error) {
+                $instance = $innerToken->getInstance();
+                $instance->setProperty('status', 'FAILED');
+                $instance->setProperty('error', [
+                    'element_name' => $element->getName(),
+                    'element_id' => $element->getId(),
+                    'error' => $error->getName(),
+                ]);
             }
         );
     }
