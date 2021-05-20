@@ -36,6 +36,6 @@
     },
     "require": {
         "doctrine/dbal": "*",
-        "processmaker/nayra": "dev-master"
+        "processmaker/nayra": "^1.4.1"
     }
 }
