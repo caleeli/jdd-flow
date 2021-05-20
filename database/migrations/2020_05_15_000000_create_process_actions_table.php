@@ -22,11 +22,11 @@ class CreateProcessActionsTable extends Migration
             $table->string('event');
             $table->string('name')->nullable();
             $table->timestamps();
-            $table->foreign('instance_id')
+            $table->foreign('process_instance_id')
                 ->references('id')->on('process_instances')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-            $table->foreign('token_id')
+            $table->foreign('process_token_id')
                 ->references('id')->on('process_tokens')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
