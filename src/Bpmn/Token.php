@@ -2,7 +2,6 @@
 
 namespace JDD\Workflow\Bpmn;
 
-use JDD\Workflow\Events\TaskAssignedEvent;
 use JDD\Workflow\Models\ProcessToken;
 use ProcessMaker\Nayra\Bpmn\Models\Token as ModelsToken;
 
@@ -39,7 +38,6 @@ class Token extends ModelsToken
     public function setUserId($userId)
     {
         $this->setProperty('user_id', $userId);
-        event(new TaskAssignedEvent($this));
     }
 
     /**

@@ -1547,3 +1547,13 @@ namespace Illuminate\Support\Facades {
     {
     }
 }
+
+namespace Illuminate\Auth\Access {
+    /**
+     * @method \Illuminate\Auth\Access\Response allow(string $message = null, mixed $code = null) Create a new access response.
+     * @method \Illuminate\Auth\Access\Response deny(string $message = null, mixed $code = null) Throws an unauthorized exception.
+     */
+    trait HandlesAuthorization
+    {
+    }
+}

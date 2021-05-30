@@ -86,6 +86,7 @@ class ProcessInstance extends Model
     ];
     protected $casts = [
         'props' => 'array',
+        'user_id' => 'integer',
     ];
 
     /**
@@ -340,5 +341,10 @@ class ProcessInstance extends Model
     public function sendMessage($targetId, $messageId, array $data = [])
     {
         Workflow::sendMessage($this->id, $targetId, $messageId, $data);
+    }
+
+    public function sendSignal($bpmn, $signalId, array $data = [])
+    {
+        Workflow::sendSignal($bpmn, $signalId, $data);
     }
 }

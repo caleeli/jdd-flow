@@ -4,6 +4,7 @@ namespace JDD\Workflow\Bpmn;
 
 use JDD\Workflow\Bpmn\Contracts\HumanPerformerInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceAssignmentExpressionInterface;
+use JDD\Workflow\Events\TaskAssignedEvent;
 use ProcessMaker\Nayra\Bpmn\BaseTrait;
 use ProcessMaker\Nayra\Contracts\Bpmn\TokenInterface;
 
@@ -27,8 +28,10 @@ class HumanPerformer implements HumanPerformerInterface
         //$token->getInstance()->getDataStore()->setData((array) $data);
         if (is_array($ids)) {
             $token->setUserId($ids[0]);
+            event(new TaskAssignedEvent($token));
         } else {
             $token->setUserId($ids);
+            event(new TaskAssignedEvent($token));
         }
     }
 }

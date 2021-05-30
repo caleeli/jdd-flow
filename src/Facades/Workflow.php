@@ -2,6 +2,7 @@
 
 namespace JDD\Workflow\Facades;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Facade;
 use ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface;
 
@@ -16,7 +17,7 @@ use ProcessMaker\Nayra\Contracts\Bpmn\ProcessInterface;
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface startProcess(string $processURL, string $eventId, array $data)
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface callProcess(string $processURL, array $data, string $processId)
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface completeTask(string $instanceId, string $tokenId, array $data)
- * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface sendMessage(string $instanceId, string $targetId, string $messageId, array $data = [])
+ * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface sendMessage(string $instanceId, string $targetId, string $messageId, array $data = [], Model $user = null)
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface updateData(string $instanceId, string $tokenId, array $data)
  * @method static \ProcessMaker\Nayra\Contracts\Engine\ExecutionInstanceInterface executeScript(string $instanceId, string $tokenId)
  * @method static \ProcessMaker\Nayra\Contracts\Bpmn\EntityInterface getElementById(string $bpmn, string $elementId = null)

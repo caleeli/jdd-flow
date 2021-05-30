@@ -2,6 +2,7 @@
 
 namespace JDD\Workflow\Bpmn;
 
+use Illuminate\Database\Eloquent\Model;
 use JDD\Workflow\Bpmn\Contracts\HumanPerformerInterface;
 use JDD\Workflow\Bpmn\Contracts\PotentialOwnerInterface;
 use JDD\Workflow\Bpmn\Contracts\ResourceAssignmentExpressionInterface;
@@ -10,6 +11,7 @@ use JDD\Workflow\Events\ActivityActivated;
 use JDD\Workflow\Events\NewProcessEvent;
 use JDD\Workflow\Events\ProcessInstanceCancelled;
 use JDD\Workflow\Events\ProcessInstanceCompleted;
+use JDD\Workflow\Exceptions\ProcessNotFoundException;
 use JDD\Workflow\Exceptions\TokenNotFoundException;
 use JDD\Workflow\Jobs\ScriptTaskJob;
 use JDD\Workflow\Models\ProcessInstance;
@@ -311,7 +313,7 @@ class Manager
      *
      * @return ExecutionInstanceInterface
      */
-    public function sendMessage($instanceId, $targetId, $messageId, $data = [])
+    public function sendMessage($instanceId, $targetId, $messageId, $data = [], Model $user = null)
     {
         $this->prepare();
         // Load the execution data
@@ -468,6 +470,7 @@ class Manager
                 return $process;
             }
         }
+        throw new ProcessNotFoundException($bpmn, $processId);
     }
 
     /**
@@ -544,7 +547,7 @@ class Manager
                 'status' => $processData->status,
                 'data' => json_decode(json_encode($processData->data), true),
                 'props' => json_decode(json_encode($processData->props ?: []), true),
-                'tokens' => $processData->tokens->toArray(),
+                'tokens' => $processData->tokens()->where('status', '!=', 'CLOSED')->get()->toArray(),
             ]
         ]);
         return $processData;

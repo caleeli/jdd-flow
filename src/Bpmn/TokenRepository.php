@@ -2,6 +2,8 @@
 
 namespace JDD\Workflow\Bpmn;
 
+use Illuminate\Support\Facades\Auth;
+use JDD\Workflow\Models\ProcessToken;
 use ProcessMaker\Nayra\Bpmn\Collection;
 use ProcessMaker\Nayra\Contracts\Bpmn\ActivityInterface;
 use ProcessMaker\Nayra\Contracts\Bpmn\CatchEventInterface;
@@ -259,7 +261,21 @@ class TokenRepository implements TokenRepositoryInterface
      */
     public function persistCatchEventMessageConsumed(CatchEventInterface $intermediateCatchEvent, TokenInterface $token)
     {
-        $this->persistCalls++;
+        $instance = $token->getInstance();
+        $model = $instance->getModel();
+        $element = $token->getOwnerElement();
+        // Save as closed only for a subsequent reference
+        $record = $model->tokens()->make();
+        $record->id = $token->getId();
+        $record->definitions = $model->definitions;
+        $record->element = $element->getId();
+        $record->name = $instance->trans($element->getName());
+        $record->type = $element->getBpmnElement()->localName;
+        $record->user_id = Auth::id();
+        $record->status = 'CLOSED';
+        $record->index = $token->getIndex();
+        $record->log = $token->getProperty('log');
+        $record->save();
     }
 
     public function persistStartEventTriggered(\ProcessMaker\Nayra\Contracts\Bpmn\StartEventInterface $startEvent, \ProcessMaker\Nayra\Contracts\Bpmn\CollectionInterface $tokens)
